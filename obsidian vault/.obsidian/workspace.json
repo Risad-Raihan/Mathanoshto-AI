@@ -1,0 +1,174 @@
+{
+  "main": {
+    "id": "c33d45a9db360a30",
+    "type": "split",
+    "children": [
+      {
+        "id": "b177d1add3e71391",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "57c561fea48a5132",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "20251110_135104_top_5_trending_AI_topic.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "20251110_135104_top_5_trending_AI_topic"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "050ea351efb26561",
+    "type": "split",
+    "children": [
+      {
+        "id": "58b8c691f2b6ffe4",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "79d5fe1391040077",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "499615a7cad2ec2f",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "2eb19c76448815a5",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "a4741b0b16051155",
+    "type": "split",
+    "children": [
+      {
+        "id": "8d3c9b5bbdfb03b3",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "fc08fee65db03bdc",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "20251110_135104_top_5_trending_AI_topic.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for 20251110_135104_top_5_trending_AI_topic"
+            }
+          },
+          {
+            "id": "e113ebff669f00fe",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "20251110_135104_top_5_trending_AI_topic.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from 20251110_135104_top_5_trending_AI_topic"
+            }
+          },
+          {
+            "id": "b8c081b04cee4d13",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "0575d6ed4fc23307",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "20251110_135104_top_5_trending_AI_topic.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline of 20251110_135104_top_5_trending_AI_topic"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
+    }
+  },
+  "active": "57c561fea48a5132",
+  "lastOpenFiles": []
+}
