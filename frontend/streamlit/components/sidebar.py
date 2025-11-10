@@ -44,12 +44,17 @@ def render_sidebar() -> dict:
         """, unsafe_allow_html=True)
         
         # Minimal icon buttons
-        col1, col2 = st.columns([1, 1])
+        col1, col2, col3 = st.columns([1, 1, 1])
         with col1:
-            if st.button("👤 Profile", key="profile_btn", use_container_width=True, help="View Profile"):
+            if st.button("👤", key="profile_btn", use_container_width=True, help="Profile"):
                 st.session_state.show_profile = True
+                st.session_state.show_file_manager = False
         with col2:
-            if st.button("🚪 Logout", key="logout_btn", use_container_width=True, help="Sign Out"):
+            if st.button("📁", key="files_btn", use_container_width=True, help="Files"):
+                st.session_state.show_file_manager = True
+                st.session_state.show_profile = False
+        with col3:
+            if st.button("🚪", key="logout_btn", use_container_width=True, help="Logout"):
                 logout()
         
         st.divider()

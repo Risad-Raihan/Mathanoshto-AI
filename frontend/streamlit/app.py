@@ -32,6 +32,7 @@ from frontend.streamlit.components.sidebar import render_sidebar
 from frontend.streamlit.components.chat import render_chat
 from frontend.streamlit.components.login import require_login
 from frontend.streamlit.components.profile import render_user_profile
+from frontend.streamlit.components.file_manager import render_file_manager
 from frontend.streamlit.styles.custom_css import get_custom_css
 
 # Load and encode background image
@@ -71,13 +72,20 @@ if not require_login():
 # Render sidebar (returns settings)
 settings = render_sidebar()
 
-# Check if profile page should be shown
+# Check which page to show
 if st.session_state.get('show_profile', False):
     render_user_profile()
     
     # Add close button
     if st.button("← Back to Chat", key="close_profile"):
         st.session_state.show_profile = False
+        st.rerun()
+elif st.session_state.get('show_file_manager', False):
+    render_file_manager()
+    
+    # Add close button
+    if st.button("← Back to Chat", key="close_file_manager"):
+        st.session_state.show_file_manager = False
         st.rerun()
 else:
     # Render main chat interface

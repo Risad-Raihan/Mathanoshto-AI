@@ -163,3 +163,82 @@ class ToolCall(Base):
     def __repr__(self):
         return f"<ToolCall(id={self.id}, tool='{self.tool_name}', status='{self.status}')>"
 
+
+class File(Base):
+    """File storage for user uploads"""
+    __tablename__ = 'files'
+    
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    
+    # File information
+    filename = Column(String(255), nullable=False)
+    original_filename = Column(String(255), nullable=False)  # Original name before sanitization
+    file_type = Column(String(50), nullable=False)  # 'pdf', 'docx', 'txt', 'image', 'csv', 'json', 'xml'
+    mime_type = Column(String(100), nullable=False)
+    file_size = Column(Integer, nullable=False)  # Size in bytes
+    file_path = Column(String(500), nullable=False)  # Relative path from uploads directory
+    
+    # File metadata
+    description = Column(Text, nullable=True)
+    extracted_text = Column(Text, nullable=True)  # Extracted text content for search
+    thumbnail_path = Column(String(500), nullable=True)  # Path to thumbnail
+    
+    # File metadata from file itself
+    author = Column(String(100), nullable=True)
+    creation_date = Column(DateTime, nullable=True)
+    
+    # Organizational
+    folder_path = Column(String(500), nullable=True, default='/')  # Virtual folder path
+    
+    # Timestamps
+    uploaded_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    user = relationship("User", backref="files")
+    tags = relationship("FileTag", back_populates="file", cascade="all, delete-orphan")
+    conversation_files = relationship("ConversationFile", back_populates="file", cascade="all, delete-orphan")
+    
+    def __repr__(self):
+        return f"<File(id={self.id}, filename='{self.filename}', type='{self.file_type}')>"
+
+
+class FileTag(Base):
+    """Tags for organizing files"""
+    __tablename__ = 'file_tags'
+    
+    id = Column(Integer, primary_key=True)
+    file_id = Column(Integer, ForeignKey('files.id'), nullable=False)
+    tag = Column(String(50), nullable=False)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    file = relationship("File", back_populates="tags")
+    
+    def __repr__(self):
+        return f"<FileTag(id={self.id}, file_id={self.file_id}, tag='{self.tag}')>"
+
+
+class ConversationFile(Base):
+    """Junction table linking files to conversations/messages"""
+    __tablename__ = 'conversation_files'
+    
+    id = Column(Integer, primary_key=True)
+    conversation_id = Column(Integer, ForeignKey('conversations.id'), nullable=False)
+    message_id = Column(Integer, ForeignKey('messages.id'), nullable=True)  # Optional: specific message
+    file_id = Column(Integer, ForeignKey('files.id'), nullable=False)
+    
+    # Metadata about the attachment
+    attached_at = Column(DateTime, default=datetime.utcnow)
+    context_type = Column(String(50), nullable=True)  # 'reference', 'analysis', 'summary', etc.
+    
+    # Relationships
+    conversation = relationship("Conversation", backref="attached_files")
+    message = relationship("Message", backref="attached_files")
+    file = relationship("File", back_populates="conversation_files")
+    
+    def __repr__(self):
+        return f"<ConversationFile(id={self.id}, conv_id={self.conversation_id}, file_id={self.file_id})>"
+

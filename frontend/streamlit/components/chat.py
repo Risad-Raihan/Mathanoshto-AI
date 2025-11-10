@@ -5,6 +5,8 @@ import streamlit as st
 import asyncio
 from backend.core.chat_manager import ChatManager
 from backend.database.operations import MessageDB
+from backend.core.file_manager import file_manager
+from backend.core.file_rag import FileRAG
 from frontend.streamlit.components.ui_utils import (
     render_thinking_indicator,
     render_empty_state,
@@ -59,6 +61,10 @@ def render_chat(settings: dict):
         st.session_state.editing_message = None
     if 'regenerating_message' not in st.session_state:
         st.session_state.regenerating_message = None
+    
+    # Initialize attached files state
+    if 'attached_files' not in st.session_state:
+        st.session_state.attached_files = []
     
     # Token counter in header with color coding
     if st.session_state.current_conversation_id:
@@ -284,13 +290,148 @@ def render_chat(settings: dict):
         
         st.rerun()
     
+    # File attachment section (before chat input)
+    st.divider()
+    
+    # Show helpful tip if user has files but nothing attached
+    user_files = file_manager.list_files(user_id, limit=100)
+    
+    if user_files and not st.session_state.attached_files:
+        st.info("💡 **Tip:** Attach files below to have the AI read and analyze them in your conversation!")
+    
+    # File selector for mentions
+    col_file1, col_file2 = st.columns([3, 1])
+    
+    with col_file1:        
+        if user_files:
+            file_options = {f"{f['original_filename']} ({f['file_type']})": f['id'] for f in user_files}
+            
+            selected_file_display = st.selectbox(
+                "📎 Select a file to attach",
+                options=["None"] + list(file_options.keys()),
+                key="file_selector",
+                help="The AI will automatically read the file content and use it to answer your questions."
+            )
+            
+            if selected_file_display != "None" and selected_file_display:
+                selected_file_id = file_options[selected_file_display]
+                
+                # Add file to attached list if not already there
+                if selected_file_id not in [f['id'] for f in st.session_state.attached_files]:
+                    # Get full file info
+                    file_info = file_manager.get_file(selected_file_id, user_id)
+                    if file_info:
+                        st.session_state.attached_files.append(file_info)
+                        show_toast(f"✅ Attached: {file_info['original_filename']}", "success")
+                        st.rerun()
+    
+    with col_file2:
+        if st.button("🗑️ Clear All", help="Remove all attached files", use_container_width=True):
+            st.session_state.attached_files = []
+            show_toast("Cleared all attachments", "info")
+            st.rerun()
+    
+    # Display currently attached files
+    if st.session_state.attached_files:
+        st.success(f"🤖 **AI will read {len(st.session_state.attached_files)} file(s) in your next message**")
+        
+        for idx, file in enumerate(st.session_state.attached_files):
+            col_a, col_b, col_c = st.columns([0.5, 8, 1.5])
+            
+            with col_a:
+                # File type icon
+                icon_map = {
+                    'pdf': '📄', 'docx': '📝', 'txt': '📃',
+                    'csv': '📊', 'json': '🔤', 'xml': '📋',
+                    'image': '🖼️', 'excel': '📈'
+                }
+                st.write(icon_map.get(file['file_type'], '📄'))
+            
+            with col_b:
+                size_mb = file['file_size'] / (1024 * 1024)
+                st.write(f"**{file['original_filename']}**")
+                
+                if file.get('has_text'):
+                    st.caption(f"✅ {size_mb:.2f} MB • Text content available")
+                else:
+                    st.caption(f"⚠️ {size_mb:.2f} MB • No text content")
+            
+            with col_c:
+                if st.button("✖", key=f"remove_file_{idx}", help="Remove", use_container_width=True):
+                    st.session_state.attached_files.pop(idx)
+                    st.rerun()
+        
+        st.divider()
+    
     # Chat input
     if prompt := st.chat_input("What can I help you with?"):
-        # Add user message to display
-        st.session_state.messages.append({"role": "user", "content": prompt})
+        # Prepare the message with file context if files are attached
+        final_prompt = prompt
+        attached_file_names = []
+        
+        if st.session_state.attached_files:
+            # Build file context
+            file_context_parts = ["\n\n--- ATTACHED FILES CONTEXT ---\n"]
+            
+            for file in st.session_state.attached_files:
+                attached_file_names.append(file['original_filename'])
+                
+                # Get file content (will try to extract on-demand if not already extracted)
+                file_content = FileRAG.get_file_context(file['id'], user_id, max_chars=15000)
+                
+                # If no content and it's a PDF, try to extract now
+                if not file_content and file['file_type'] in ['pdf', 'docx', 'txt', 'csv', 'json', 'xml']:
+                    from backend.utils.file_storage import file_storage
+                    from backend.utils.file_parser import file_parser
+                    from backend.database.file_operations import FileDB
+                    
+                    # Get file record
+                    file_record = FileDB.get_file(file['id'])
+                    if file_record:
+                        full_path = file_storage.get_file_path(file_record.file_path)
+                        
+                        # Try to extract text now
+                        parse_result = file_parser.parse_file(full_path, file['file_type'], enable_ocr=False)
+                        
+                        if parse_result['success'] and parse_result.get('text'):
+                            file_content = parse_result['text']
+                            
+                            # Save extracted text to database for future use
+                            FileDB.update_file(file['id'], extracted_text=file_content)
+                            
+                            # Truncate if needed
+                            if len(file_content) > 15000:
+                                file_content = file_content[:15000] + "...\n[Content truncated]"
+                
+                if file_content:
+                    file_context_parts.append(f"\n📎 **File: {file['original_filename']}** (Type: {file['file_type']})\n")
+                    file_context_parts.append(f"```\n{file_content}\n```\n")
+                else:
+                    file_context_parts.append(f"\n📎 **File: {file['original_filename']}** (Unable to extract text content)\n")
+            
+            file_context_parts.append("\n--- END OF FILES ---\n\n")
+            file_context_parts.append(f"User's question about the above file(s): {prompt}")
+            
+            final_prompt = "".join(file_context_parts)
+            
+            # Attach files to conversation in database
+            for file in st.session_state.attached_files:
+                file_manager.attach_to_conversation(
+                    file['id'], 
+                    st.session_state.current_conversation_id,
+                    user_id,
+                    context_type='reference'
+                )
+        
+        # Add user message to display (show original prompt + file indicators)
+        display_content = prompt
+        if attached_file_names:
+            display_content += f"\n\n📎 **Attached files:** {', '.join(attached_file_names)}"
+        
+        st.session_state.messages.append({"role": "user", "content": display_content})
         
         with st.chat_message("user"):
-            st.markdown(prompt)
+            st.markdown(display_content)
         
         # Get AI response
         with st.chat_message("assistant"):
@@ -311,10 +452,10 @@ def render_chat(settings: dict):
                 )
             
             try:
-                # Run async function
+                # Run async function (use final_prompt which includes file context)
                 response = asyncio.run(
                     st.session_state.chat_manager.send_message(
-                        user_message=prompt,
+                        user_message=final_prompt,  # Use final_prompt with file context
                         provider=settings["provider"],
                         model=settings["model"],
                         temperature=settings["temperature"],
@@ -357,6 +498,10 @@ def render_chat(settings: dict):
                             model=settings["model"]
                         )
                     )
+                
+                # Clear attached files after successful response
+                if st.session_state.attached_files:
+                    st.session_state.attached_files = []
                 
                 # Show success toast
                 show_toast("Response generated successfully!", "success")
