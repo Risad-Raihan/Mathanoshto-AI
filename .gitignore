@@ -1,3 +1,4 @@
 .env
+env.backup.txt
 output/
 .obsidian/
