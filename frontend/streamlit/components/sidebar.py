@@ -3,7 +3,18 @@ Sidebar component with settings and controls
 """
 import streamlit as st
 from backend.core.model_factory import model_factory
-from backend.database.operations import ConversationDB
+from backend.database.operations import ConversationDB, MessageDB
+from frontend.streamlit.components.ui_utils import (
+    render_conversation_card,
+    render_empty_state,
+    show_confirmation_dialog,
+    show_toast,
+    render_dark_mode_toggle
+)
+from frontend.streamlit.components.login import logout
+from frontend.streamlit.components.api_keys import render_api_key_management
+from frontend.streamlit.components.profile import render_user_profile
+from datetime import datetime
 
 def render_sidebar() -> dict:
     """
@@ -12,7 +23,37 @@ def render_sidebar() -> dict:
     Returns:
         dict: Current settings (provider, model, temperature, etc.)
     """
+    # Get user info from session
+    user_id = st.session_state.get('user_id')
+    username = st.session_state.get('username', 'User')
+    full_name = st.session_state.get('full_name', username)
+    
     with st.sidebar:
+        # User info header with clean icons
+        st.markdown(f"""
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; margin-bottom: 0.5rem;">
+            <div style="flex-grow: 1;">
+                <div style="font-size: 1.1rem; font-weight: 600; color: var(--color-text-primary);">
+                    {full_name}
+                </div>
+                <div style="font-size: 0.85rem; color: var(--color-text-secondary); opacity: 0.8;">
+                    @{username}
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Minimal icon buttons
+        col1, col2 = st.columns([1, 1])
+        with col1:
+            if st.button("👤 Profile", key="profile_btn", use_container_width=True, help="View Profile"):
+                st.session_state.show_profile = True
+        with col2:
+            if st.button("🚪 Logout", key="logout_btn", use_container_width=True, help="Sign Out"):
+                logout()
+        
+        st.divider()
+        
         st.title("⚙️ Settings")
         
         # Provider selection
@@ -90,6 +131,17 @@ def render_sidebar() -> dict:
         
         st.divider()
         
+        # API Key Management
+        with st.expander("🔑 API Keys", expanded=False):
+            render_api_key_management()
+        
+        st.divider()
+        
+        # Dark Mode Toggle
+        render_dark_mode_toggle()
+        
+        st.divider()
+        
         # Conversation management
         st.subheader("💬 Conversations")
         
@@ -99,13 +151,37 @@ def render_sidebar() -> dict:
             st.session_state.messages = []
             st.rerun()
         
-        # List recent conversations
-        conversations = ConversationDB.list_conversations(limit=10)
+        # List recent conversations for this user
+        conversations = ConversationDB.list_conversations(user_id=user_id, limit=10)
         
         if conversations:
             st.write("**Recent:**")
+            
             for conv in conversations:
-                col1, col2 = st.columns([4, 1])
+                # Check if delete confirmation is needed
+                if st.session_state.get(f"confirm_delete_{conv.id}", False):
+                    with st.container():
+                        st.warning(f"Delete '{conv.title[:20]}...'?")
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            if st.button("Yes, delete", key=f"confirm_yes_{conv.id}", use_container_width=True):
+                                ConversationDB.delete_conversation(conv.id)
+                                st.session_state[f"confirm_delete_{conv.id}"] = False
+                                show_toast("Conversation deleted", "success")
+                                st.rerun()
+                        with col2:
+                            if st.button("Cancel", key=f"confirm_no_{conv.id}", use_container_width=True):
+                                st.session_state[f"confirm_delete_{conv.id}"] = False
+                                st.rerun()
+                    continue
+                
+                # Get conversation metadata
+                message_count = MessageDB.get_message_count(conv.id)
+                token_usage = MessageDB.get_conversation_tokens(conv.id)
+                
+                # Render conversation card with actions
+                col1, col2 = st.columns([5, 1])
+                
                 with col1:
                     # Truncate long titles
                     display_title = conv.title[:30] + "..." if len(conv.title) > 30 else conv.title
@@ -116,15 +192,43 @@ def render_sidebar() -> dict:
                     ):
                         # Load conversation
                         from backend.core.chat_manager import ChatManager
-                        st.session_state.chat_manager = ChatManager(conversation_id=conv.id)
+                        st.session_state.chat_manager = ChatManager(user_id=user_id, conversation_id=conv.id)
                         st.session_state.current_conversation_id = conv.id
                         st.session_state.messages = st.session_state.chat_manager.get_conversation_history()
                         st.rerun()
+                    
+                    # Display metadata
+                    time_diff = datetime.now() - conv.created_at
+                    if time_diff.days == 0:
+                        if time_diff.seconds < 3600:
+                            time_str = f"{time_diff.seconds // 60}m ago"
+                        else:
+                            time_str = f"{time_diff.seconds // 3600}h ago"
+                    elif time_diff.days == 1:
+                        time_str = "Yesterday"
+                    elif time_diff.days < 7:
+                        time_str = f"{time_diff.days}d ago"
+                    else:
+                        time_str = conv.created_at.strftime("%b %d")
+                    
+                    st.caption(
+                        f"🕒 {time_str} • 💬 {message_count} • "
+                        f"🔢 {token_usage['total_tokens']:,} • "
+                        f"💰 ${token_usage['total_cost']:.4f}"
+                    )
                 
                 with col2:
-                    if st.button("🗑️", key=f"del_{conv.id}"):
-                        ConversationDB.delete_conversation(conv.id)
+                    if st.button("🗑️", key=f"del_{conv.id}", help="Delete conversation"):
+                        st.session_state[f"confirm_delete_{conv.id}"] = True
                         st.rerun()
+        else:
+            # Empty state for no conversations
+            st.markdown("""
+            <div class="empty-state">
+                <div class="empty-state-icon">💬</div>
+                <div class="empty-state-description">No conversations yet</div>
+            </div>
+            """, unsafe_allow_html=True)
     
     return {
         "provider": provider,

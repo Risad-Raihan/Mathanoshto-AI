@@ -4,9 +4,7 @@ Tavily Web Search Tool
 import json
 from typing import Dict, List
 from tavily import TavilyClient
-from backend.config.settings import get_settings
-
-settings = get_settings()
+from backend.config.settings import settings
 
 class TavilySearchTool:
     """Web search using Tavily API"""
@@ -28,7 +26,7 @@ class TavilySearchTool:
             "type": "function",
             "function": {
                 "name": "web_search",
-                "description": "Search the web for current information, news, facts, or any real-time data. Use this when the user asks about current events, recent information, or anything that requires up-to-date knowledge.",
+                "description": "Search the web for current information, news, facts, or any real-time data. Use this when the user asks about current events, recent information, or anything that requires up-to-date knowledge. Make ONE comprehensive search query instead of multiple separate searches.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -68,6 +66,12 @@ class TavilySearchTool:
                 include_raw_content=False
             )
             
+            # Debug: Print the raw response to see what we're getting
+            print(f"📊 Tavily Response Keys: {response.keys() if isinstance(response, dict) else 'Not a dict'}")
+            if isinstance(response, dict):
+                print(f"📊 Answer: {response.get('answer', 'No answer')[:200]}")
+                print(f"📊 Results count: {len(response.get('results', []))}")
+            
             # Format results
             result_text = []
             
@@ -83,10 +87,15 @@ class TavilySearchTool:
                 result_text.append(f"   URL: {item.get('url', 'N/A')}")
                 result_text.append(f"   {item.get('content', 'No content')[:300]}...")
             
-            return "\n".join(result_text)
+            final_result = "\n".join(result_text)
+            print(f"📊 Final formatted result length: {len(final_result)} chars")
+            
+            return final_result
             
         except Exception as e:
-            return f"❌ Search failed: {str(e)}"
+            error_msg = f"❌ Search failed: {str(e)}"
+            print(error_msg)
+            return error_msg
     
     def execute(self, function_args: Dict) -> str:
         """

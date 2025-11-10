@@ -10,6 +10,10 @@ pydantic>=2.0.0
 pydantic-settings>=2.0.0
 PyYAML>=6.0.0
 
+# Authentication & Security
+bcrypt>=4.0.0
+cryptography>=41.0.0
+
 # Database
 SQLAlchemy>=2.0.0
 

@@ -11,17 +11,73 @@ from datetime import datetime
 
 Base = declarative_base()
 
+class User(Base):
+    """User accounts for the application"""
+    __tablename__ = 'users'
+    
+    id = Column(Integer, primary_key=True)
+    username = Column(String(50), unique=True, nullable=False)
+    password_hash = Column(String(255), nullable=False)
+    full_name = Column(String(100), nullable=True)
+    email = Column(String(100), nullable=True)
+    
+    # User preferences
+    default_provider = Column(String(50), nullable=True, default='openai')
+    default_model = Column(String(100), nullable=True, default='gpt-4o')
+    default_temperature = Column(Float, default=0.7)
+    default_max_tokens = Column(Integer, default=2000)
+    theme = Column(String(20), default='dark')  # 'dark' or 'light'
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    last_login = Column(DateTime, nullable=True)
+    is_active = Column(Boolean, default=True)
+    
+    # Relationships
+    conversations = relationship("Conversation", back_populates="user", cascade="all, delete-orphan")
+    api_keys = relationship("UserAPIKey", back_populates="user", cascade="all, delete-orphan")
+    
+    def __repr__(self):
+        return f"<User(id={self.id}, username='{self.username}', full_name='{self.full_name}')>"
+
+
+class UserAPIKey(Base):
+    """Encrypted API keys for each user"""
+    __tablename__ = 'user_api_keys'
+    
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    
+    # API key info
+    provider = Column(String(50), nullable=False)  # 'openai', 'gemini', 'anthropic', 'tavily'
+    key_name = Column(String(100), nullable=False)  # e.g., 'OPENAI_API_KEY'
+    encrypted_key = Column(Text, nullable=False)  # Encrypted API key
+    
+    # Optional: base URL for custom endpoints
+    base_url = Column(String(255), nullable=True)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    is_active = Column(Boolean, default=True)
+    
+    # Relationships
+    user = relationship("User", back_populates="api_keys")
+    
+    def __repr__(self):
+        return f"<UserAPIKey(id={self.id}, user_id={self.user_id}, provider='{self.provider}')>"
+
 class Conversation(Base):
     """Conversation/Chat session"""
     __tablename__ = 'conversations'
     
     id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     title = Column(String(255), nullable=False, default="New Conversation")
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     is_archived = Column(Boolean, default=False)
     
     # Relationships
+    user = relationship("User", back_populates="conversations")
     messages = relationship("Message", back_populates="conversation", cascade="all, delete-orphan")
     
     def __repr__(self):

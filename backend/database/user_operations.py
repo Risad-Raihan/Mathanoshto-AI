@@ -1,0 +1,317 @@
+"""
+Database operations for users and API keys
+"""
+from sqlalchemy.orm import Session
+from typing import List, Optional, Dict
+from datetime import datetime
+
+from backend.database.models import User, UserAPIKey
+from backend.database.operations import get_db
+from backend.auth import hash_password, verify_password, encrypt_api_key, decrypt_api_key
+
+
+class UserDB:
+    """Database operations for users"""
+    
+    @staticmethod
+    def create_user(
+        username: str,
+        password: str,
+        full_name: Optional[str] = None,
+        email: Optional[str] = None
+    ) -> User:
+        """
+        Create a new user
+        
+        Args:
+            username: Unique username
+            password: Plain text password (will be hashed)
+            full_name: Full name of user
+            email: Email address
+            
+        Returns:
+            Created User object
+        """
+        db = get_db()
+        try:
+            password_hash = hash_password(password)
+            user = User(
+                username=username,
+                password_hash=password_hash,
+                full_name=full_name,
+                email=email
+            )
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+            return user
+        finally:
+            db.close()
+    
+    @staticmethod
+    def get_user_by_username(username: str) -> Optional[User]:
+        """Get user by username"""
+        db = get_db()
+        try:
+            return db.query(User).filter(User.username == username).first()
+        finally:
+            db.close()
+    
+    @staticmethod
+    def get_user_by_id(user_id: int) -> Optional[User]:
+        """Get user by ID"""
+        db = get_db()
+        try:
+            return db.query(User).filter(User.id == user_id).first()
+        finally:
+            db.close()
+    
+    @staticmethod
+    def authenticate_user(username: str, password: str) -> Optional[User]:
+        """
+        Authenticate user with username and password
+        
+        Args:
+            username: Username
+            password: Plain text password
+            
+        Returns:
+            User object if authentication succeeds, None otherwise
+        """
+        user = UserDB.get_user_by_username(username)
+        if user and verify_password(password, user.password_hash):
+            # Update last login
+            UserDB.update_last_login(user.id)
+            return user
+        return None
+    
+    @staticmethod
+    def update_last_login(user_id: int):
+        """Update user's last login time"""
+        db = get_db()
+        try:
+            user = db.query(User).filter(User.id == user_id).first()
+            if user:
+                user.last_login = datetime.utcnow()
+                db.commit()
+        finally:
+            db.close()
+    
+    @staticmethod
+    def update_user_preferences(
+        user_id: int,
+        default_provider: Optional[str] = None,
+        default_model: Optional[str] = None,
+        default_temperature: Optional[float] = None,
+        default_max_tokens: Optional[int] = None,
+        theme: Optional[str] = None
+    ):
+        """Update user preferences"""
+        db = get_db()
+        try:
+            user = db.query(User).filter(User.id == user_id).first()
+            if user:
+                if default_provider is not None:
+                    user.default_provider = default_provider
+                if default_model is not None:
+                    user.default_model = default_model
+                if default_temperature is not None:
+                    user.default_temperature = default_temperature
+                if default_max_tokens is not None:
+                    user.default_max_tokens = default_max_tokens
+                if theme is not None:
+                    user.theme = theme
+                db.commit()
+        finally:
+            db.close()
+    
+    @staticmethod
+    def list_all_users() -> List[User]:
+        """Get all users"""
+        db = get_db()
+        try:
+            return db.query(User).all()
+        finally:
+            db.close()
+
+
+class UserAPIKeyDB:
+    """Database operations for user API keys"""
+    
+    @staticmethod
+    def add_api_key(
+        user_id: int,
+        provider: str,
+        api_key: str,
+        key_name: str,
+        base_url: Optional[str] = None
+    ) -> UserAPIKey:
+        """
+        Add or update an API key for a user
+        
+        Args:
+            user_id: User ID
+            provider: Provider name (openai, gemini, etc.)
+            api_key: Plain text API key (will be encrypted)
+            key_name: Key name (e.g., 'OPENAI_API_KEY')
+            base_url: Optional base URL for custom endpoints
+            
+        Returns:
+            Created UserAPIKey object
+        """
+        db = get_db()
+        try:
+            # Check if key already exists
+            existing = db.query(UserAPIKey).filter(
+                UserAPIKey.user_id == user_id,
+                UserAPIKey.provider == provider
+            ).first()
+            
+            encrypted = encrypt_api_key(api_key)
+            
+            if existing:
+                # Update existing key
+                existing.encrypted_key = encrypted
+                existing.key_name = key_name
+                existing.base_url = base_url
+                existing.updated_at = datetime.utcnow()
+                existing.is_active = True
+                db.commit()
+                db.refresh(existing)
+                return existing
+            else:
+                # Create new key
+                api_key_obj = UserAPIKey(
+                    user_id=user_id,
+                    provider=provider,
+                    key_name=key_name,
+                    encrypted_key=encrypted,
+                    base_url=base_url
+                )
+                db.add(api_key_obj)
+                db.commit()
+                db.refresh(api_key_obj)
+                return api_key_obj
+        finally:
+            db.close()
+    
+    @staticmethod
+    def get_api_key(user_id: int, provider: str) -> Optional[str]:
+        """
+        Get decrypted API key for a user and provider
+        
+        Args:
+            user_id: User ID
+            provider: Provider name
+            
+        Returns:
+            Decrypted API key or None
+        """
+        db = get_db()
+        try:
+            key_obj = db.query(UserAPIKey).filter(
+                UserAPIKey.user_id == user_id,
+                UserAPIKey.provider == provider,
+                UserAPIKey.is_active == True
+            ).first()
+            
+            if key_obj:
+                return decrypt_api_key(key_obj.encrypted_key)
+            return None
+        finally:
+            db.close()
+    
+    @staticmethod
+    def get_all_user_keys(user_id: int) -> Dict[str, str]:
+        """
+        Get all decrypted API keys for a user
+        
+        Args:
+            user_id: User ID
+            
+        Returns:
+            Dictionary mapping provider to API key
+        """
+        db = get_db()
+        try:
+            keys = db.query(UserAPIKey).filter(
+                UserAPIKey.user_id == user_id,
+                UserAPIKey.is_active == True
+            ).all()
+            
+            result = {}
+            for key_obj in keys:
+                decrypted = decrypt_api_key(key_obj.encrypted_key)
+                if decrypted:
+                    result[key_obj.provider] = decrypted
+                    if key_obj.base_url:
+                        result[f"{key_obj.provider}_base_url"] = key_obj.base_url
+            
+            return result
+        finally:
+            db.close()
+    
+    @staticmethod
+    def list_user_api_keys(user_id: int) -> List[Dict]:
+        """
+        List all API keys for a user (without decrypting them)
+        
+        Args:
+            user_id: User ID
+            
+        Returns:
+            List of API key info dictionaries
+        """
+        db = get_db()
+        try:
+            keys = db.query(UserAPIKey).filter(
+                UserAPIKey.user_id == user_id
+            ).all()
+            
+            return [
+                {
+                    "id": key.id,
+                    "provider": key.provider,
+                    "key_name": key.key_name,
+                    "base_url": key.base_url,
+                    "is_active": key.is_active,
+                    "created_at": key.created_at,
+                    "updated_at": key.updated_at
+                }
+                for key in keys
+            ]
+        finally:
+            db.close()
+    
+    @staticmethod
+    def delete_api_key(user_id: int, provider: str):
+        """Delete an API key"""
+        db = get_db()
+        try:
+            key_obj = db.query(UserAPIKey).filter(
+                UserAPIKey.user_id == user_id,
+                UserAPIKey.provider == provider
+            ).first()
+            
+            if key_obj:
+                db.delete(key_obj)
+                db.commit()
+        finally:
+            db.close()
+    
+    @staticmethod
+    def deactivate_api_key(user_id: int, provider: str):
+        """Deactivate an API key"""
+        db = get_db()
+        try:
+            key_obj = db.query(UserAPIKey).filter(
+                UserAPIKey.user_id == user_id,
+                UserAPIKey.provider == provider
+            ).first()
+            
+            if key_obj:
+                key_obj.is_active = False
+                db.commit()
+        finally:
+            db.close()
+

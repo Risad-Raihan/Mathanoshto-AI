@@ -30,11 +30,11 @@ class ConversationDB:
     """Database operations for conversations"""
     
     @staticmethod
-    def create_conversation(title: str = "New Conversation") -> Conversation:
-        """Create a new conversation"""
+    def create_conversation(user_id: int, title: str = "New Conversation") -> Conversation:
+        """Create a new conversation for a user"""
         db = get_db()
         try:
-            conversation = Conversation(title=title)
+            conversation = Conversation(user_id=user_id, title=title)
             db.add(conversation)
             db.commit()
             db.refresh(conversation)
@@ -52,12 +52,13 @@ class ConversationDB:
             db.close()
     
     @staticmethod
-    def list_conversations(limit: int = 50, include_archived: bool = False) -> List[Conversation]:
-        """List all conversations"""
+    def list_conversations(user_id: int, limit: int = 50, include_archived: bool = False) -> List[Conversation]:
+        """List all conversations for a user"""
         db = get_db()
         try:
             from sqlalchemy.orm import joinedload
             query = db.query(Conversation).options(joinedload(Conversation.messages))
+            query = query.filter(Conversation.user_id == user_id)
             if not include_archived:
                 query = query.filter(Conversation.is_archived == False)
             conversations = query.order_by(desc(Conversation.updated_at)).limit(limit).all()
@@ -155,6 +156,17 @@ class MessageDB:
             return db.query(Message).filter(
                 Message.conversation_id == conversation_id
             ).order_by(Message.created_at).all()
+        finally:
+            db.close()
+    
+    @staticmethod
+    def get_message_count(conversation_id: int) -> int:
+        """Get count of messages in a conversation"""
+        db = get_db()
+        try:
+            return db.query(Message).filter(
+                Message.conversation_id == conversation_id
+            ).count()
         finally:
             db.close()
     

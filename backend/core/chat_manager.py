@@ -14,18 +14,21 @@ class ChatManager:
     Manages chat conversations and coordinates with LLM providers
     """
     
-    def __init__(self, conversation_id: Optional[int] = None):
+    def __init__(self, user_id: int, conversation_id: Optional[int] = None):
         """
         Initialize chat manager
         
         Args:
+            user_id: User ID who owns this conversation
             conversation_id: Existing conversation ID, or None to create new
         """
+        self.user_id = user_id
+        
         if conversation_id:
             self.conversation_id = conversation_id
         else:
-            # Create new conversation
-            conversation = ConversationDB.create_conversation()
+            # Create new conversation for this user
+            conversation = ConversationDB.create_conversation(user_id=user_id)
             self.conversation_id = conversation.id
         
         self.factory = model_factory
@@ -124,6 +127,12 @@ class ChatManager:
                 from backend.tools.tavily_search import get_tavily_tool
                 import json
                 
+                # Limit to maximum 2 tool calls to prevent excessive API usage
+                max_tools = 2
+                if len(response.tool_calls) > max_tools:
+                    print(f"⚠️ LLM requested {len(response.tool_calls)} tool calls, limiting to {max_tools}")
+                    response.tool_calls = response.tool_calls[:max_tools]
+                
                 # Execute tool and get results
                 tool_results = []
                 for tool_call in response.tool_calls:
@@ -156,18 +165,23 @@ class ChatManager:
                     # Add tool results
                     for tool_result in tool_results:
                         messages.append(tool_result)
+                        print(f"📤 Sending tool result to LLM: {tool_result['content'][:200]}...")
                     
                     # Make second API call with tool results
                     print("🔄 Generating response with search results...")
+                    print(f"📝 Total messages in conversation: {len(messages)}")
+                    # Don't include tools in second call to prevent infinite loop
+                    # Remove 'tools' from kwargs if present
+                    kwargs_without_tools = {k: v for k, v in kwargs.items() if k != 'tools'}
                     response = await llm_provider.chat_completion(
                         messages=messages,
                         model=model,
                         temperature=temperature,
                         max_tokens=max_tokens,
                         stream=False,
-                        tools=tools,
-                        **kwargs
+                        **kwargs_without_tools
                     )
+                    print(f"✅ Got final response (has tool_calls: {bool(response.tool_calls)})")
             
             # Save assistant response to database
             MessageDB.add_message(
