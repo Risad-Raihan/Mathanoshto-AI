@@ -1,0 +1,8 @@
+pyenv: streamlit: command not found
+
+The `streamlit' command exists in these Python versions:
+  3.12.10/envs/edubot
+  edubot
+
+Note: See 'pyenv help global' for tips on allowing both
+      python2 and python3 to be found.

@@ -1,8 +1,240 @@
-# Tavily Search Agent with LLM Wrapper
+# Personal LLM Assistant
 
-An intelligent search agent that uses Tavily API to search the web and wraps the results using LLM (Gemini 2.5-flash or OpenAI) for enhanced summaries. Outputs formatted markdown files optimized for Obsidian.
+> 🚀 **Status**: Under Development | Previously: Tavily Search Wrapper
 
-## Features
+A full-featured ChatGPT-like personal assistant with multi-model support, multimodal capabilities, and web search integration. Built with Python, Streamlit, and support for OpenAI, Google Gemini, and Anthropic Claude.
+
+## 🎯 Vision
+
+Transform from a simple search wrapper into a comprehensive personal AI assistant that:
+- Supports **all models** from OpenAI, Gemini, and Claude
+- Provides a **chat interface** with conversation history
+- Handles **multimodal input** (images, PDFs, documents)
+- Includes **web search** as an optional tool (Tavily)
+- Tracks **token usage and costs** in real-time
+- Allows **model switching** mid-conversation
+
+## ✨ Key Features (Planned)
+
+### Core Features (MVP)
+- 🤖 **Multi-Provider Support**: OpenAI (GPT-4o, GPT-3.5, etc.), Google Gemini (1.5 Pro, Flash, 2.0), Anthropic Claude
+- 🔄 **Model Switching**: Switch between any model during conversation
+- 💬 **Chat Interface**: Beautiful Streamlit UI (Next.js planned)
+- 💾 **Conversation History**: SQLite database with full persistence
+- 📊 **Token Tracking**: Real-time token usage and cost calculation
+- 🖼️ **Multimodal**: Image upload, PDF parsing, document processing
+- 🔍 **Web Search Tool**: Optional Tavily search integration
+- ⚙️ **Extensible**: Easy to add new providers and tools
+
+### Advanced Features (Roadmap)
+- 📤 **Export**: Save conversations as Markdown, JSON, or PDF
+- 🎙️ **Voice I/O**: Speech-to-text and text-to-speech
+- 🔧 **Custom Tools**: Code execution, calculator, and more
+- 🌊 **Streaming**: Real-time token-by-token responses
+- 🎨 **Themes**: Customizable UI themes
+- 🐳 **Docker**: Easy deployment
+
+## 📚 Documentation
+
+**Start here if you're new:**
+1. **[QUICK_START.md](QUICK_START.md)** - Quick reference and overview
+2. **[PROJECT_PLAN.md](PROJECT_PLAN.md)** - Detailed step-by-step implementation guide
+3. **[DIRECTORY_STRUCTURE.md](DIRECTORY_STRUCTURE.md)** - Project structure explanation
+4. **[IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md)** - Progress tracking and milestones
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Python 3.11+
+- API keys for OpenAI and/or Gemini
+- Tavily API key (for web search)
+
+### Installation
+
+1. **Clone and setup:**
+```bash
+git clone <your-repo>
+cd tavily_search_wraper
+
+# Run automated setup
+./setup_project.sh
+
+# Or manually create structure
+mkdir -p backend/{config,core,providers,tools,utils,database}
+mkdir -p frontend/streamlit/components
+mkdir -p tests/{unit,integration}
+```
+
+2. **Install dependencies:**
+```bash
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# or .\venv\Scripts\activate on Windows
+
+pip install -r requirements.txt
+```
+
+3. **Configure environment:**
+```bash
+# Copy template
+cp .env.example .env
+
+# Edit .env with your API keys
+nano .env
+```
+
+Required keys:
+```env
+TAVILY_API_KEY=your_tavily_key_here
+OPENAI_API_KEY=your_openai_key_here
+GEMINI_API_KEY=your_gemini_key_here
+```
+
+4. **Follow implementation guide:**
+```bash
+# Open PROJECT_PLAN.md and start with Phase 1
+# Implement backend/config/settings.py first
+```
+
+5. **Run the app (after implementation):**
+```bash
+streamlit run frontend/streamlit/app.py
+```
+
+## 📋 Implementation Status
+
+```
+Phase 1: Foundation         [░░░░░░░░░░] 0%
+Phase 2: Database          [░░░░░░░░░░] 0%
+Phase 3: Frontend          [░░░░░░░░░░] 0%
+Phase 4: Multimodal        [░░░░░░░░░░] 0%
+Phase 5: Tools             [░░░░░░░░░░] 0%
+Phase 6: Testing           [░░░░░░░░░░] 0%
+```
+
+See **[IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md)** for detailed progress.
+
+## 🏗️ Architecture
+
+```
+User Interface (Streamlit)
+         ↓
+   Chat Manager
+         ↓
+   Model Factory → Provider Abstraction
+         ↓
+   LLM APIs (OpenAI, Gemini, Claude)
+         ↓
+   Response Processing
+         ↓
+   Database Storage (SQLite)
+```
+
+### Key Components:
+- **Providers**: Abstraction layer for LLM APIs
+- **Chat Manager**: Conversation flow and history
+- **Model Factory**: Provider instantiation and management
+- **Tools**: Function calling framework (web search, etc.)
+- **Database**: SQLAlchemy models for persistence
+
+## 🛠️ Technology Stack
+
+### Backend
+- **Python 3.11+**
+- **LLM SDKs**: `openai`, `google-generativeai`, `anthropic`
+- **Database**: SQLAlchemy + SQLite
+- **Config**: Pydantic, PyYAML
+- **Async**: aiohttp, asyncio
+- **Files**: Pillow, PyPDF2
+
+### Frontend
+- **Streamlit** (MVP)
+- **Next.js + FastAPI** (Planned)
+
+### Development
+- **Testing**: pytest, pytest-asyncio
+- **Code Quality**: black, flake8, mypy
+
+## 💰 Token Tracking
+
+The system automatically tracks and displays:
+- Input tokens per message
+- Output tokens per message
+- Cost per message (calculated from model pricing)
+- Total cost per conversation
+- Real-time updates in UI
+
+Example pricing (from `models.yaml`):
+- GPT-4o: $2.50 / $10.00 per 1M tokens
+- GPT-4o-mini: $0.15 / $0.60 per 1M tokens
+- Gemini 1.5 Flash: $0.075 / $0.30 per 1M tokens
+
+## 🔧 Configuration
+
+All models are defined in `backend/config/models.yaml`:
+```yaml
+openai:
+  models:
+    - name: "gpt-4o"
+      display_name: "GPT-4o"
+      context_window: 128000
+      supports_vision: true
+      supports_tools: true
+      cost_per_1m_input_tokens: 2.50
+      # ... more config
+```
+
+Easy to add new models or update pricing!
+
+## 🎨 UI Preview (Planned)
+
+### Sidebar:
+- Provider selector (OpenAI / Gemini / Claude)
+- Model dropdown (filtered by provider)
+- Advanced settings (temperature, max tokens)
+- System prompt editor
+- Tool toggles (web search, etc.)
+- Conversation list
+
+### Main Chat:
+- Token counter dashboard
+- Message history with avatars
+- File upload button
+- Code syntax highlighting
+- Markdown rendering
+
+## 🧪 Testing
+
+```bash
+# Run all tests
+pytest
+
+# Run with coverage
+pytest --cov=backend --cov=frontend
+
+# Run specific test file
+pytest tests/unit/test_providers.py
+
+# Format code
+black backend/ frontend/ tests/
+```
+
+## 📖 Legacy: Original Search Wrapper
+
+The original Tavily search wrapper is preserved in `tavily_search.py`. It still works and can be used independently:
+
+```bash
+# Old usage (still works)
+python tavily_search.py "your query" --llm openai
+```
+
+See the legacy documentation below for details.
+
+---
+
+# Legacy Documentation (Original Project)
+
+## Old Features (Still Available)
 
 - 🔍 **Tavily Search**: Advanced web search with Tavily API
 - 🤖 **LLM Wrapping**: Synthesize and enhance search results using:

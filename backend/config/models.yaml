@@ -1,0 +1,167 @@
+# Model Registry - All available models and their capabilities
+
+openai:
+  provider_name: "OpenAI"
+  base_url: "https://api.openai.com/v1"
+  models:
+    - name: "gpt-5"
+      display_name: "GPT-5"
+      description: "Latest and most advanced GPT-5 model (temperature locked at 1)"
+      context_window: 200000
+      max_output_tokens: 32768
+      supports_vision: true
+      supports_tools: true
+      supports_json_mode: true
+      cost_per_1m_input_tokens: 5.00
+      cost_per_1m_output_tokens: 15.00
+      
+    - name: "gpt-4o"
+      display_name: "GPT-4o"
+      description: "Most advanced multimodal model"
+      context_window: 128000
+      max_output_tokens: 16384
+      supports_vision: true
+      supports_tools: true
+      supports_json_mode: true
+      cost_per_1m_input_tokens: 2.50
+      cost_per_1m_output_tokens: 10.00
+      
+    - name: "gpt-4o-mini"
+      display_name: "GPT-4o Mini"
+      description: "Fast and affordable multimodal model"
+      context_window: 128000
+      max_output_tokens: 16384
+      supports_vision: true
+      supports_tools: true
+      supports_json_mode: true
+      cost_per_1m_input_tokens: 0.15
+      cost_per_1m_output_tokens: 0.60
+      
+    - name: "gpt-4-turbo"
+      display_name: "GPT-4 Turbo"
+      description: "Previous generation flagship model"
+      context_window: 128000
+      max_output_tokens: 4096
+      supports_vision: true
+      supports_tools: true
+      supports_json_mode: true
+      cost_per_1m_input_tokens: 10.00
+      cost_per_1m_output_tokens: 30.00
+      
+    - name: "gpt-4"
+      display_name: "GPT-4"
+      description: "Original GPT-4 model"
+      context_window: 8192
+      max_output_tokens: 8192
+      supports_vision: false
+      supports_tools: true
+      supports_json_mode: true
+      cost_per_1m_input_tokens: 30.00
+      cost_per_1m_output_tokens: 60.00
+      
+    - name: "gpt-3.5-turbo"
+      display_name: "GPT-3.5 Turbo"
+      description: "Fast and efficient model"
+      context_window: 16385
+      max_output_tokens: 4096
+      supports_vision: false
+      supports_tools: true
+      supports_json_mode: true
+      cost_per_1m_input_tokens: 0.50
+      cost_per_1m_output_tokens: 1.50
+
+gemini:
+  provider_name: "Google Gemini"
+  models:
+    - name: "gemini-2.0-flash-exp"
+      display_name: "Gemini 2.0 Flash (Experimental)"
+      description: "Next generation experimental model"
+      context_window: 1048576
+      max_output_tokens: 8192
+      supports_vision: true
+      supports_tools: true
+      supports_json_mode: true
+      cost_per_1m_input_tokens: 0.0  # Free during preview
+      cost_per_1m_output_tokens: 0.0
+      
+    - name: "gemini-exp-1206"
+      display_name: "Gemini Flash 2.5"
+      description: "Latest Gemini 2.5 Flash model - fastest and most capable"
+      context_window: 1048576
+      max_output_tokens: 8192
+      supports_vision: true
+      supports_tools: true
+      supports_json_mode: true
+      cost_per_1m_input_tokens: 0.0  # Free during preview
+      cost_per_1m_output_tokens: 0.0
+      
+    - name: "gemini-1.5-pro"
+      display_name: "Gemini 1.5 Pro"
+      description: "Most capable model with 1M context"
+      context_window: 1048576
+      max_output_tokens: 8192
+      supports_vision: true
+      supports_tools: true
+      supports_json_mode: true
+      cost_per_1m_input_tokens: 1.25
+      cost_per_1m_output_tokens: 5.00
+      
+    - name: "gemini-1.5-flash"
+      display_name: "Gemini 1.5 Flash"
+      description: "Fast and efficient with 1M context"
+      context_window: 1048576
+      max_output_tokens: 8192
+      supports_vision: true
+      supports_tools: true
+      supports_json_mode: true
+      cost_per_1m_input_tokens: 0.075
+      cost_per_1m_output_tokens: 0.30
+      
+    - name: "gemini-1.5-flash-8b"
+      display_name: "Gemini 1.5 Flash-8B"
+      description: "Smallest and fastest model"
+      context_window: 1048576
+      max_output_tokens: 8192
+      supports_vision: true
+      supports_tools: true
+      supports_json_mode: true
+      cost_per_1m_input_tokens: 0.0375
+      cost_per_1m_output_tokens: 0.15
+
+anthropic:
+  provider_name: "Anthropic Claude"
+  base_url: "https://api.anthropic.com/v1"
+  models:
+    - name: "claude-3-5-sonnet-20241022"
+      display_name: "Claude 3.5 Sonnet"
+      description: "Most intelligent model"
+      context_window: 200000
+      max_output_tokens: 8192
+      supports_vision: true
+      supports_tools: true
+      supports_json_mode: false
+      cost_per_1m_input_tokens: 3.00
+      cost_per_1m_output_tokens: 15.00
+      
+    - name: "claude-3-5-haiku-20241022"
+      display_name: "Claude 3.5 Haiku"
+      description: "Fast and affordable"
+      context_window: 200000
+      max_output_tokens: 8192
+      supports_vision: false
+      supports_tools: true
+      supports_json_mode: false
+      cost_per_1m_input_tokens: 1.00
+      cost_per_1m_output_tokens: 5.00
+      
+    - name: "claude-3-opus-20240229"
+      display_name: "Claude 3 Opus"
+      description: "Previous flagship model"
+      context_window: 200000
+      max_output_tokens: 4096
+      supports_vision: true
+      supports_tools: true
+      supports_json_mode: false
+      cost_per_1m_input_tokens: 15.00
+      cost_per_1m_output_tokens: 75.00
+
