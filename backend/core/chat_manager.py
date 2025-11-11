@@ -139,19 +139,31 @@ class ChatManager:
                     function_name = tool_call['function']['name']
                     function_args = json.loads(tool_call['function']['arguments'])
                     
-                    print(f"🔧 Tool Call: {function_name}({function_args.get('query', '')})")
+                    print(f"🔧 Tool Call: {function_name}({function_args.get('query', function_args.get('url', '')[:50])})")
                     
                     # Execute the tool
+                    result = None
                     if function_name == "web_search":
                         tool = get_tavily_tool()
                         result = tool.execute(function_args)
+                    elif function_name in ["scrape_url", "monitor_url"]:
+                        from backend.tools.scraper_tool import execute_scraper_tool
+                        result = execute_scraper_tool(function_name, function_args)
+                    elif function_name in ["summarize_youtube_video", "get_playlist_summary"]:
+                        from backend.tools.youtube_integration import execute_youtube_tool
+                        result = execute_youtube_tool(function_name, function_args)
+                    elif function_name in ["analyze_dataset", "create_visualization", "generate_pandas_code"]:
+                        from backend.tools.data_analyzer_integration import execute_data_analyzer_tool
+                        result = execute_data_analyzer_tool(function_name, function_args)
+                    
+                    if result:
                         tool_results.append({
                             "tool_call_id": tool_call['id'],
                             "role": "tool",
                             "name": function_name,
                             "content": result
                         })
-                        print(f"✅ Tool executed successfully")
+                        print(f"✅ Tool {function_name} executed successfully")
                 
                 # If we have tool results, make a second call with the results
                 if tool_results:

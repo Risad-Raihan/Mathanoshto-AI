@@ -127,12 +127,15 @@ def get_tavily_tool() -> TavilySearchTool:
     return _tavily_tool
 
 
-def get_enabled_tools(use_tavily: bool = False) -> List[Dict]:
+def get_enabled_tools(use_tavily: bool = False, use_web_scraper: bool = False, use_youtube: bool = False, use_data_analyzer: bool = False) -> List[Dict]:
     """
     Get list of enabled tool definitions
     
     Args:
         use_tavily: Whether to enable Tavily search
+        use_web_scraper: Whether to enable web scraper
+        use_youtube: Whether to enable YouTube summarizer
+        use_data_analyzer: Whether to enable data analyzer
         
     Returns:
         List of tool definitions for LLM
@@ -146,6 +149,27 @@ def get_enabled_tools(use_tavily: bool = False) -> List[Dict]:
         except ValueError as e:
             # Tavily not configured, skip
             print(f"⚠️ Warning: {e}")
+    
+    if use_web_scraper:
+        try:
+            from backend.tools.scraper_tool import SCRAPER_TOOLS
+            tools.extend(SCRAPER_TOOLS)
+        except Exception as e:
+            print(f"⚠️ Warning: Web scraper not available: {e}")
+    
+    if use_youtube:
+        try:
+            from backend.tools.youtube_integration import YOUTUBE_TOOLS
+            tools.extend(YOUTUBE_TOOLS)
+        except Exception as e:
+            print(f"⚠️ Warning: YouTube tools not available: {e}")
+    
+    if use_data_analyzer:
+        try:
+            from backend.tools.data_analyzer_integration import DATA_ANALYZER_TOOLS
+            tools.extend(DATA_ANALYZER_TOOLS)
+        except Exception as e:
+            print(f"⚠️ Warning: Data analyzer not available: {e}")
     
     return tools
 

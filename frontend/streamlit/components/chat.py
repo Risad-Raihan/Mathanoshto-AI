@@ -20,6 +20,72 @@ from frontend.streamlit.components.ui_utils import (
 )
 from frontend.streamlit.components.header import render_header
 import re
+from pathlib import Path
+
+
+def display_message_with_images(content: str):
+    """Display message content and extract/show any embedded images"""
+    if not content:
+        return
+    
+    # Pattern to match image paths in various formats:
+    # - sandbox:/path/to/image.png
+    # - uploads/visualizations/image.png
+    # - [text](sandbox:/path/to/image.png)
+    # - Direct paths to images
+    
+    image_patterns = [
+        r'sandbox:/([\w/\-_.]+\.(?:png|jpg|jpeg|gif|webp))',  # sandbox: prefix
+        r'\((sandbox:/)?(uploads/[\w/\-_.]+\.(?:png|jpg|jpeg|gif|webp))\)',  # markdown links
+        r'(?:^|\s)(uploads/[\w/\-_.]+\.(?:png|jpg|jpeg|gif|webp))(?:\s|$)',  # direct paths
+    ]
+    
+    # Find all image paths in content
+    found_images = []
+    for pattern in image_patterns:
+        matches = re.finditer(pattern, content, re.IGNORECASE)
+        for match in matches:
+            # Get the path (might be in different groups depending on pattern)
+            img_path = match.group(1) if match.lastindex >= 1 else match.group(0)
+            img_path = img_path.strip()
+            
+            # Clean up the path
+            if img_path.startswith('sandbox:/'):
+                img_path = img_path[9:]  # Remove 'sandbox:/'
+            
+            # Check if file exists
+            full_path = Path(img_path)
+            if full_path.exists():
+                found_images.append((str(full_path), match.span()))
+    
+    # Remove duplicates while preserving order
+    unique_images = []
+    seen = set()
+    for img, span in found_images:
+        if img not in seen:
+            unique_images.append((img, span))
+            seen.add(img)
+    
+    # Display the text content (with image references removed for clarity)
+    display_content = content
+    
+    # Remove sandbox: links from display
+    display_content = re.sub(r'\[([^\]]+)\]\(sandbox:/[^\)]+\)', r'\1', display_content)
+    
+    # Display the text
+    st.markdown(display_content)
+    
+    # Display all found images
+    if unique_images:
+        st.divider()
+        for img_path, _ in unique_images:
+            # Check if file exists before trying to display
+            if Path(img_path).exists():
+                st.image(img_path, width='stretch')
+                st.caption(f"📊 {Path(img_path).name}")
+            else:
+                st.warning(f"⚠️ Image file not found: {Path(img_path).name}")
+
 
 def render_chat(settings: dict):
     """
@@ -134,6 +200,9 @@ def render_chat(settings: dict):
                 # Split content by code blocks
                 parts = re.split(r'```(\w+)?\n(.*?)```', content, flags=re.DOTALL)
                 
+                # Check if there are images anywhere in the content
+                has_images = bool(re.search(r'sandbox:/[\w/\-_.]+\.(?:png|jpg|jpeg|gif|webp)', content, re.IGNORECASE))
+                
                 for i, part in enumerate(parts):
                     if i % 3 == 0 and part:  # Regular text
                         st.markdown(part)
@@ -143,8 +212,23 @@ def render_chat(settings: dict):
                         # Add copy button for code
                         if st.button("📋 Copy", key=f"copy_code_{idx}_{i}"):
                             st.toast("✅ Copied to clipboard!", icon="✅")
+                
+                # Display images if any
+                if has_images and role == "assistant":
+                    image_pattern = r'sandbox:/([\w/\-_.]+\.(?:png|jpg|jpeg|gif|webp))'
+                    images = re.findall(image_pattern, content, re.IGNORECASE)
+                    if images:
+                        st.divider()
+                        for img_path in images:
+                            if Path(img_path).exists():
+                                st.image(img_path, width='stretch')
+                                st.caption(f"📊 {Path(img_path).name}")
             else:
-                st.markdown(content)
+                # Use image display function for assistant messages
+                if role == "assistant":
+                    display_message_with_images(content)
+                else:
+                    st.markdown(content)
             
             # Message actions - inline small icons
             actions_html = f"""
@@ -236,10 +320,24 @@ def render_chat(settings: dict):
         # Get AI response (same as normal chat flow)
         with st.chat_message("assistant"):
             from backend.tools.tavily_search import get_enabled_tools
-            tools = get_enabled_tools(use_tavily=settings.get("use_tavily", False))
+            tools = get_enabled_tools(
+                use_tavily=settings.get("use_tavily", False),
+                use_web_scraper=settings.get("use_web_scraper", False),
+                use_youtube=settings.get("use_youtube", False),
+                use_data_analyzer=settings.get("use_data_analyzer", False)
+            )
             
             if tools:
-                st.caption("🔧 Tools enabled: Web Search")
+                enabled_tools = []
+                if settings.get("use_tavily"):
+                    enabled_tools.append("Web Search")
+                if settings.get("use_web_scraper"):
+                    enabled_tools.append("Web Scraper")
+                if settings.get("use_youtube"):
+                    enabled_tools.append("YouTube")
+                if settings.get("use_data_analyzer"):
+                    enabled_tools.append("Data Analyzer")
+                st.caption(f"🔧 Tools enabled: {', '.join(enabled_tools)}")
             
             thinking_placeholder = st.empty()
             with thinking_placeholder:
@@ -405,11 +503,15 @@ def render_chat(settings: dict):
                 
                 if file_content:
                     file_context_parts.append(f"\n📎 **File: {file['original_filename']}** (Type: {file['file_type']})\n")
+                    file_context_parts.append(f"File path for analysis: {file['file_path']}\n")
                     file_context_parts.append(f"```\n{file_content}\n```\n")
                 else:
-                    file_context_parts.append(f"\n📎 **File: {file['original_filename']}** (Unable to extract text content)\n")
+                    file_context_parts.append(f"\n📎 **File: {file['original_filename']}** (Type: {file['file_type']})\n")
+                    file_context_parts.append(f"File path for analysis: {file['file_path']}\n")
+                    file_context_parts.append(f"(Unable to extract text content preview, but file is available for analysis tools)\n")
             
             file_context_parts.append("\n--- END OF FILES ---\n\n")
+            file_context_parts.append("📌 IMPORTANT: When using data analysis tools (analyze_dataset, create_visualization), use the 'File path for analysis' provided above as the file_path parameter.\n\n")
             file_context_parts.append(f"User's question about the above file(s): {prompt}")
             
             final_prompt = "".join(file_context_parts)
@@ -437,11 +539,25 @@ def render_chat(settings: dict):
         with st.chat_message("assistant"):
             # Get enabled tools
             from backend.tools.tavily_search import get_enabled_tools
-            tools = get_enabled_tools(use_tavily=settings.get("use_tavily", False))
+            tools = get_enabled_tools(
+                use_tavily=settings.get("use_tavily", False),
+                use_web_scraper=settings.get("use_web_scraper", False),
+                use_youtube=settings.get("use_youtube", False),
+                use_data_analyzer=settings.get("use_data_analyzer", False)
+            )
             
             # Show if tools are enabled
             if tools:
-                st.caption("🔧 Tools enabled: Web Search")
+                enabled_tools = []
+                if settings.get("use_tavily"):
+                    enabled_tools.append("Web Search")
+                if settings.get("use_web_scraper"):
+                    enabled_tools.append("Web Scraper")
+                if settings.get("use_youtube"):
+                    enabled_tools.append("YouTube")
+                if settings.get("use_data_analyzer"):
+                    enabled_tools.append("Data Analyzer")
+                st.caption(f"🔧 Tools enabled: {', '.join(enabled_tools)}")
             
             # Show thinking indicator with model name
             thinking_placeholder = st.empty()
@@ -469,7 +585,13 @@ def render_chat(settings: dict):
                 # Clear thinking indicator
                 thinking_placeholder.empty()
                 
-                st.markdown(response.content)
+                # Check if response is empty
+                if not response.content or not response.content.strip():
+                    st.error("⚠️ No response received from the model. The tool executed but the model didn't generate a response.")
+                    st.info("This might be a model issue. Try asking again or use a different model.")
+                else:
+                    # Display response content with image support
+                    display_message_with_images(response.content)
                 
                 # Show token info with colored cost
                 cost_emoji = "💰" if response.cost < 0.01 else "⚠️" if response.cost < 0.10 else "🚨"

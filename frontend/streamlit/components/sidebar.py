@@ -131,7 +131,25 @@ def render_sidebar() -> dict:
         use_tavily = st.checkbox(
             "Enable Web Search (Tavily)",
             value=False,
-            help="Allow assistant to search the web"
+            help="Search the web for current information and real-time data"
+        )
+        
+        use_web_scraper = st.checkbox(
+            "Enable Web Scraper",
+            value=False,
+            help="Scrape and extract content from any URL, including articles, documentation, and web pages"
+        )
+        
+        use_youtube = st.checkbox(
+            "Enable YouTube Summarizer",
+            value=False,
+            help="Summarize YouTube videos, extract transcripts, and get key moments with timestamps"
+        )
+        
+        use_data_analyzer = st.checkbox(
+            "Enable Data Analyzer",
+            value=False,
+            help="Analyze CSV/Excel files, create visualizations, get statistics, and generate pandas code"
         )
         
         st.divider()
@@ -241,6 +259,9 @@ def render_sidebar() -> dict:
         "temperature": temperature,
         "max_tokens": max_tokens,
         "system_prompt": system_prompt if system_prompt else None,
-        "use_tavily": use_tavily
+        "use_tavily": use_tavily,
+        "use_web_scraper": use_web_scraper,
+        "use_youtube": use_youtube,
+        "use_data_analyzer": use_data_analyzer
     }
 
