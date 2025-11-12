@@ -152,6 +152,17 @@ def render_chat(settings: dict):
             cost_label = "💰 Total Cost" if usage['total_cost'] < 0.10 else "⚠️ Total Cost"
             st.metric(cost_label, f"${usage['total_cost']:.4f}", delta=None)
         
+        # Export buttons
+        export_col1, export_col2, export_col3 = st.columns([4, 1, 1])
+        with export_col1:
+            st.markdown("")  # Spacer
+        with export_col2:
+            if st.button("📥 Export as JSON", use_container_width=True, key="export_json_btn"):
+                _export_conversation_json(st.session_state.current_conversation_id, st.session_state.user_id)
+        with export_col3:
+            if st.button("📄 Export as MD", use_container_width=True, key="export_md_btn"):
+                _export_conversation_markdown(st.session_state.current_conversation_id, st.session_state.user_id)
+        
         st.divider()
     
     # Search box for messages
@@ -800,4 +811,87 @@ def render_chat(settings: dict):
                     st.caption("If this error persists, please check the application logs.")
         
         st.rerun()
+
+
+def _export_conversation_json(conversation_id: int, user_id: int):
+    """Export conversation as JSON and trigger download"""
+    try:
+        from backend.core.conversation_exporter import export_conversation
+        from backend.database.operations import ConversationDB
+        from pathlib import Path
+        import json
+        
+        with st.spinner("Exporting as JSON..."):
+            # Get conversation
+            conversation = ConversationDB.get_conversation(conversation_id)
+            
+            # Export
+            filepath = export_conversation(
+                conversation_id=conversation_id,
+                user_id=user_id,
+                export_format='json',
+                include_summary=True,
+                privacy_mode=False
+            )
+            
+            # Read file
+            with open(filepath, 'r', encoding='utf-8') as f:
+                json_content = f.read()
+            
+            # Create download button
+            filename = f"{conversation.title.replace(' ', '_')}.json"
+            
+            st.download_button(
+                label="⬇️ Download JSON",
+                data=json_content,
+                file_name=filename,
+                mime='application/json',
+                use_container_width=True
+            )
+            
+            st.success(f"✅ Exported successfully!")
+            
+    except Exception as e:
+        st.error(f"❌ Export failed: {str(e)}")
+
+
+def _export_conversation_markdown(conversation_id: int, user_id: int):
+    """Export conversation as Markdown and trigger download"""
+    try:
+        from backend.core.conversation_exporter import export_conversation
+        from backend.database.operations import ConversationDB
+        from pathlib import Path
+        
+        with st.spinner("Exporting as Markdown..."):
+            # Get conversation
+            conversation = ConversationDB.get_conversation(conversation_id)
+            
+            # Export
+            filepath = export_conversation(
+                conversation_id=conversation_id,
+                user_id=user_id,
+                export_format='markdown',
+                include_summary=True,
+                privacy_mode=False
+            )
+            
+            # Read file
+            with open(filepath, 'r', encoding='utf-8') as f:
+                md_content = f.read()
+            
+            # Create download button
+            filename = f"{conversation.title.replace(' ', '_')}.md"
+            
+            st.download_button(
+                label="⬇️ Download Markdown",
+                data=md_content,
+                file_name=filename,
+                mime='text/markdown',
+                use_container_width=True
+            )
+            
+            st.success(f"✅ Exported successfully!")
+            
+    except Exception as e:
+        st.error(f"❌ Export failed: {str(e)}")
 
