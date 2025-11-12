@@ -29,48 +29,83 @@ def display_message_with_images(content: str):
         return
     
     # Pattern to match image paths in various formats:
+    # - ![alt text](path/to/image.png)  [MARKDOWN]
     # - sandbox:/path/to/image.png
     # - uploads/visualizations/image.png
     # - [text](sandbox:/path/to/image.png)
     # - Direct paths to images
     
     image_patterns = [
-        r'sandbox:/([\w/\-_.]+\.(?:png|jpg|jpeg|gif|webp))',  # sandbox: prefix
-        r'\((sandbox:/)?(uploads/[\w/\-_.]+\.(?:png|jpg|jpeg|gif|webp))\)',  # markdown links
-        r'(?:^|\s)(uploads/[\w/\-_.]+\.(?:png|jpg|jpeg|gif|webp))(?:\s|$)',  # direct paths
+        # Markdown image syntax: ![alt](path)
+        r'!\[([^\]]*)\]\(([^\)]+\.(?:png|jpg|jpeg|gif|webp|bmp))\)',
+        # sandbox: prefix
+        r'sandbox:/([\w/\-_.]+\.(?:png|jpg|jpeg|gif|webp|bmp))',
+        # Markdown links with sandbox
+        r'\[([^\]]+)\]\(sandbox:/([\w/\-_.]+\.(?:png|jpg|jpeg|gif|webp|bmp))\)',
+        # Markdown links with direct path
+        r'\[([^\]]+)\]\((uploads/[\w/\-_.]+\.(?:png|jpg|jpeg|gif|webp|bmp))\)',
+        # Direct paths
+        r'(?:^|\s)(uploads/[\w/\-_.]+\.(?:png|jpg|jpeg|gif|webp|bmp))(?:\s|$)',
     ]
     
     # Find all image paths in content
     found_images = []
-    for pattern in image_patterns:
+    for pattern_idx, pattern in enumerate(image_patterns):
         matches = re.finditer(pattern, content, re.IGNORECASE)
         for match in matches:
-            # Get the path (might be in different groups depending on pattern)
-            img_path = match.group(1) if match.lastindex >= 1 else match.group(0)
+            # Extract image path based on pattern
+            if pattern_idx == 0:  # Markdown image: ![alt](path)
+                img_path = match.group(2)
+                alt_text = match.group(1)
+            elif pattern_idx == 1:  # sandbox:/path
+                img_path = match.group(1)
+                alt_text = None
+            elif pattern_idx == 2:  # [text](sandbox:/path)
+                img_path = match.group(2)
+                alt_text = match.group(1)
+            elif pattern_idx == 3:  # [text](uploads/path)
+                img_path = match.group(2)
+                alt_text = match.group(1)
+            else:  # Direct path
+                img_path = match.group(1)
+                alt_text = None
+            
             img_path = img_path.strip()
             
             # Clean up the path
             if img_path.startswith('sandbox:/'):
                 img_path = img_path[9:]  # Remove 'sandbox:/'
             
+            # Convert to absolute path if relative
+            if not Path(img_path).is_absolute():
+                # Get project root (four levels up from frontend/streamlit/components/)
+                # chat.py is at: frontend/streamlit/components/chat.py
+                project_root = Path(__file__).parent.parent.parent.parent
+                full_path = (project_root / img_path).resolve()
+            else:
+                full_path = Path(img_path)
+            
             # Check if file exists
-            full_path = Path(img_path)
             if full_path.exists():
-                found_images.append((str(full_path), match.span()))
+                found_images.append((str(full_path), match.span(), alt_text))
     
     # Remove duplicates while preserving order
     unique_images = []
     seen = set()
-    for img, span in found_images:
+    for img, span, alt in found_images:
         if img not in seen:
-            unique_images.append((img, span))
+            unique_images.append((img, span, alt))
             seen.add(img)
     
-    # Display the text content (with image references removed for clarity)
+    # Display the text content (with image markdown removed for clarity)
     display_content = content
     
+    # Remove markdown image syntax
+    display_content = re.sub(r'!\[([^\]]*)\]\(([^\)]+\.(?:png|jpg|jpeg|gif|webp|bmp))\)', '', display_content)
     # Remove sandbox: links from display
     display_content = re.sub(r'\[([^\]]+)\]\(sandbox:/[^\)]+\)', r'\1', display_content)
+    # Remove direct upload path links
+    display_content = re.sub(r'\[([^\]]+)\]\((uploads/[^\)]+\.(?:png|jpg|jpeg|gif|webp|bmp))\)', r'\1', display_content)
     
     # Display the text
     st.markdown(display_content)
@@ -78,11 +113,12 @@ def display_message_with_images(content: str):
     # Display all found images
     if unique_images:
         st.divider()
-        for img_path, _ in unique_images:
+        for img_path, _, alt_text in unique_images:
             # Check if file exists before trying to display
             if Path(img_path).exists():
                 st.image(img_path, width='stretch')
-                st.caption(f"📊 {Path(img_path).name}")
+                caption = alt_text if alt_text else Path(img_path).name
+                st.caption(f"🖼️ {caption}")
             else:
                 st.warning(f"⚠️ Image file not found: {Path(img_path).name}")
 
@@ -335,7 +371,8 @@ def render_chat(settings: dict):
                 use_tavily=settings.get("use_tavily", False),
                 use_web_scraper=settings.get("use_web_scraper", False),
                 use_youtube=settings.get("use_youtube", False),
-                use_data_analyzer=settings.get("use_data_analyzer", False)
+                use_data_analyzer=settings.get("use_data_analyzer", False),
+                use_image_generator=settings.get("use_image_generator", False)
             )
             
             if tools:
@@ -348,6 +385,8 @@ def render_chat(settings: dict):
                     enabled_tools.append("YouTube")
                 if settings.get("use_data_analyzer"):
                     enabled_tools.append("Data Analyzer")
+                if settings.get("use_image_generator"):
+                    enabled_tools.append("Image Generator")
                 st.caption(f"🔧 Tools enabled: {', '.join(enabled_tools)}")
             
             thinking_placeholder = st.empty()
@@ -410,14 +449,84 @@ def render_chat(settings: dict):
         
         st.rerun()
     
-    # File attachment section (before chat input)
+    # File and Image attachment section (before chat input)
     st.divider()
+    
+    # Initialize attached images state
+    if 'attached_images' not in st.session_state:
+        st.session_state.attached_images = []
     
     # Show helpful tip if user has files but nothing attached
     user_files = file_manager.list_files(user_id, limit=100)
     
-    if user_files and not st.session_state.attached_files:
-        st.info("💡 **Tip:** Attach files below to have the AI read and analyze them in your conversation!")
+    if user_files and not st.session_state.attached_files and not st.session_state.attached_images:
+        st.info("💡 **Tip:** Attach files or images below to have the AI analyze them in your conversation!")
+    
+    # Image upload section
+    st.markdown("### 🖼️ Image Attachments")
+    
+    img_col1, img_col2, img_col3 = st.columns([2, 2, 1])
+    
+    with img_col1:
+        # Multiple image upload
+        uploaded_images = st.file_uploader(
+            "Upload images",
+            type=['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'],
+            accept_multiple_files=True,
+            key="image_uploader",
+            help="Upload one or more images for the AI to analyze"
+        )
+        
+        if uploaded_images:
+            from backend.core.image_handler import image_handler
+            for uploaded_file in uploaded_images:
+                # Check if already attached
+                if uploaded_file.name not in [img.get('original_filename') for img in st.session_state.attached_images]:
+                    # Save uploaded image
+                    file_data = uploaded_file.read()
+                    result = image_handler.save_uploaded_image(
+                        file_data,
+                        uploaded_file.name,
+                        user_id,
+                        metadata={'source': 'upload', 'conversation_id': st.session_state.current_conversation_id}
+                    )
+                    
+                    if result['success']:
+                        st.session_state.attached_images.append(result)
+                        show_toast(f"✅ Image attached: {uploaded_file.name}", "success")
+                    else:
+                        st.error(f"❌ Failed to attach {uploaded_file.name}: {result['error']}")
+    
+    with img_col2:
+        # Clipboard paste option (instructions)
+        st.markdown("""
+        **📋 Paste from Clipboard:**
+        
+        Use Ctrl+V (Cmd+V on Mac) in the chat input below to paste images directly!
+        """)
+    
+    with img_col3:
+        if st.button("🗑️ Clear Images", help="Remove all attached images", use_container_width=True):
+            st.session_state.attached_images = []
+            show_toast("Cleared image attachments", "info")
+            st.rerun()
+    
+    # Display attached images
+    if st.session_state.attached_images:
+        st.success(f"🖼️ **AI will analyze {len(st.session_state.attached_images)} image(s) in your next message**")
+        
+        # Show image previews
+        img_preview_cols = st.columns(min(len(st.session_state.attached_images), 4))
+        for idx, img_info in enumerate(st.session_state.attached_images):
+            with img_preview_cols[idx % 4]:
+                st.image(img_info['file_path'], caption=img_info.get('original_filename', img_info['filename']), width=150)
+                size_mb = img_info['size_bytes'] / (1024 * 1024)
+                st.caption(f"{img_info['dimensions'][0]}×{img_info['dimensions'][1]} | {size_mb:.2f} MB")
+                if st.button("✖", key=f"remove_img_{idx}", help="Remove"):
+                    st.session_state.attached_images.pop(idx)
+                    st.rerun()
+    
+    st.divider()
     
     # File selector for mentions
     col_file1, col_file2 = st.columns([3, 1])
@@ -485,9 +594,26 @@ def render_chat(settings: dict):
     
     # Chat input
     if prompt := st.chat_input("What can I help you with?"):
-        # Prepare the message with file context if files are attached
+        # Prepare the message with file and image context if attached
         final_prompt = prompt
         attached_file_names = []
+        attached_image_data = []
+        
+        # Process attached images for vision models
+        if st.session_state.attached_images:
+            from backend.core.image_handler import image_handler as img_handler
+            
+            for img_info in st.session_state.attached_images:
+                # Get base64 encoded image
+                base64_data = img_handler.get_image_base64(img_info['file_path'])
+                if base64_data:
+                    attached_image_data.append({
+                        'type': 'image',
+                        'data': base64_data,
+                        'filename': img_info.get('original_filename', img_info['filename']),
+                        'format': img_info['format'],
+                        'dimensions': img_info['dimensions']
+                    })
         
         if st.session_state.attached_files:
             # Build file context
@@ -547,10 +673,13 @@ def render_chat(settings: dict):
                     context_type='reference'
                 )
         
-        # Add user message to display (show original prompt + file indicators)
+        # Add user message to display (show original prompt + file + image indicators)
         display_content = prompt
         if attached_file_names:
             display_content += f"\n\n📎 **Attached files:** {', '.join(attached_file_names)}"
+        if attached_image_data:
+            image_names = [img['filename'] for img in attached_image_data]
+            display_content += f"\n\n🖼️ **Attached images:** {', '.join(image_names)}"
         
         st.session_state.messages.append({"role": "user", "content": display_content})
         
@@ -565,7 +694,8 @@ def render_chat(settings: dict):
                 use_tavily=settings.get("use_tavily", False),
                 use_web_scraper=settings.get("use_web_scraper", False),
                 use_youtube=settings.get("use_youtube", False),
-                use_data_analyzer=settings.get("use_data_analyzer", False)
+                use_data_analyzer=settings.get("use_data_analyzer", False),
+                use_image_generator=settings.get("use_image_generator", False)
             )
             
             # Show if tools are enabled
@@ -579,6 +709,8 @@ def render_chat(settings: dict):
                     enabled_tools.append("YouTube")
                 if settings.get("use_data_analyzer"):
                     enabled_tools.append("Data Analyzer")
+                if settings.get("use_image_generator"):
+                    enabled_tools.append("Image Generator")
                 st.caption(f"🔧 Tools enabled: {', '.join(enabled_tools)}")
             
             # Show thinking indicator with model name
@@ -625,7 +757,8 @@ def render_chat(settings: dict):
                             use_tavily=settings.get("use_tavily", False),
                             use_web_scraper=settings.get("use_web_scraper", False),
                             use_youtube=settings.get("use_youtube", False),
-                            use_data_analyzer=settings.get("use_data_analyzer", False)
+                            use_data_analyzer=settings.get("use_data_analyzer", False),
+                            use_image_generator=settings.get("use_image_generator", False)
                         )
                     
                     # Show agent indicator
@@ -693,6 +826,11 @@ def render_chat(settings: dict):
                     traceback.print_exc()
                 
                 # Run async function (use final_prompt which includes file context)
+                # Pass images if attached
+                extra_kwargs = {}
+                if attached_image_data:
+                    extra_kwargs['images'] = attached_image_data
+                
                 response = asyncio.run(
                     st.session_state.chat_manager.send_message(
                         user_message=final_prompt,  # Use final_prompt with file context
@@ -702,7 +840,8 @@ def render_chat(settings: dict):
                         max_tokens=max_tokens,  # Use agent or manual max_tokens
                         system_prompt=enhanced_system_prompt,  # Use agent or manual system prompt with memories
                         tools=tools if tools else None,
-                        stream=False
+                        stream=False,
+                        **extra_kwargs
                     )
                 )
                 
@@ -745,9 +884,11 @@ def render_chat(settings: dict):
                         )
                     )
                 
-                # Clear attached files after successful response
+                # Clear attached files and images after successful response
                 if st.session_state.attached_files:
                     st.session_state.attached_files = []
+                if st.session_state.attached_images:
+                    st.session_state.attached_images = []
                 
                 # Show success toast
                 show_toast("Response generated successfully!", "success")

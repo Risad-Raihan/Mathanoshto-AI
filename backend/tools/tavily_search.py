@@ -45,25 +45,28 @@ class TavilySearchTool:
             }
         }
     
-    def search(self, query: str, max_results: int = 5) -> str:
+    def search(self, query: str, max_results: int = 5, include_images: bool = True, extract_previews: bool = False) -> str:
         """
-        Execute web search
+        Execute web search with rich previews
         
         Args:
             query: Search query
             max_results: Maximum results to return
+            include_images: Whether to include Tavily images
+            extract_previews: Whether to extract link preview images
             
         Returns:
-            Formatted search results as string
+            Formatted search results as string with images
         """
         try:
-            # Perform search
+            # Perform search with images
             response = self.client.search(
                 query=query,
                 max_results=max_results,
                 search_depth="advanced",
                 include_answer=True,
-                include_raw_content=False
+                include_raw_content=False,
+                include_images=include_images
             )
             
             # Debug: Print the raw response to see what we're getting
@@ -71,30 +74,130 @@ class TavilySearchTool:
             if isinstance(response, dict):
                 print(f"📊 Answer: {response.get('answer', 'No answer')[:200]}")
                 print(f"📊 Results count: {len(response.get('results', []))}")
+                print(f"📊 Images count: {len(response.get('images', []))}")
             
             # Format results
             result_text = []
             
             # Add AI summary if available
             if response.get('answer'):
-                result_text.append(f"📝 Summary: {response['answer']}\n")
+                result_text.append(f"📝 **Summary:** {response['answer']}\n")
             
-            # Add search results
-            result_text.append(f"🔍 Search Results for '{query}':\n")
+            # Add Tavily images if available
+            images = response.get('images', [])
+            if images and include_images:
+                print(f"🖼️ Processing {len(images)} Tavily images...")
+                result_text.append(f"\n🖼️ **Related Images ({len(images)}):**\n")
+                
+                # Download and cache images
+                try:
+                    from backend.core.image_handler import image_handler
+                    print(f"✅ Image handler loaded successfully")
+                except Exception as e:
+                    print(f"❌ Failed to load image handler: {e}")
+                    result_text.append(f"*(Could not load image handler)*\n")
+                    images = []  # Skip image processing
+                
+                if images:
+                    # Try to get user_id safely
+                    user_id = 1  # Default user
+                    try:
+                        import streamlit as st
+                        if hasattr(st, 'session_state') and hasattr(st.session_state, 'user_id'):
+                            user_id = st.session_state.user_id
+                            print(f"✅ Got user_id from session: {user_id}")
+                        else:
+                            print(f"⚠️ Using default user_id: {user_id}")
+                    except Exception as e:
+                        print(f"⚠️ Could not get user_id from session: {e}, using default: {user_id}")
+                    
+                    successful_images = 0
+                    for idx, img_url in enumerate(images[:5], 1):  # Try up to 5 images
+                        if successful_images >= 3:  # But only show 3
+                            break
+                        
+                        print(f"📥 Attempting to download image {idx}: {img_url[:80]}...")
+                        
+                        # Try to download and save image
+                        try:
+                            img_result = image_handler.save_from_url(img_url, user_id, source='search')
+                            
+                            if img_result.get('success'):
+                                successful_images += 1
+                                print(f"✅ Image {successful_images} downloaded: {img_result['relative_path']}")
+                                # Add image reference that will be displayed
+                                result_text.append(f"\n![Image {successful_images}]({img_result['relative_path']})")
+                                result_text.append(f"*Image {successful_images}* - {img_result.get('size_kb', 'unknown')} KB\n")
+                            else:
+                                print(f"❌ Image download failed: {img_result.get('error', 'Unknown error')}")
+                        except Exception as img_error:
+                            print(f"❌ Exception downloading image: {str(img_error)}")
+                            import traceback
+                            traceback.print_exc()
+                    
+                    print(f"✅ Successfully downloaded {successful_images} out of {len(images[:5])} images")
+                    
+                    if successful_images == 0:
+                        result_text.append("*(No images could be downloaded - check terminal for errors)*\n")
+            
+            # Add search results with link previews
+            result_text.append(f"\n📑 **Search Results for '{query}':**\n")
+            
+            # Extract link previews for better visual results
+            if extract_previews:
+                from backend.utils.link_preview import link_preview_extractor
+                from backend.core.image_handler import image_handler
+                
+                user_id = 1
+                try:
+                    import streamlit as st
+                    if hasattr(st, 'session_state') and hasattr(st.session_state, 'user_id'):
+                        user_id = st.session_state.user_id
+                except:
+                    pass
             
             for idx, item in enumerate(response.get('results', []), 1):
-                result_text.append(f"\n{idx}. **{item.get('title', 'No title')}**")
-                result_text.append(f"   URL: {item.get('url', 'N/A')}")
-                result_text.append(f"   {item.get('content', 'No content')[:300]}...")
+                url = item.get('url', 'N/A')
+                title = item.get('title', 'No title')
+                content = item.get('content', 'No content')
+                
+                result_text.append(f"\n### {idx}. {title}")
+                result_text.append(f"🔗 {url}\n")
+                
+                # Try to extract and show preview image
+                if extract_previews and url != 'N/A':
+                    try:
+                        preview = link_preview_extractor.extract_preview(url)
+                        
+                        # If we found a preview image, download and display it
+                        if preview['image']:
+                            img_result = image_handler.save_from_url(
+                                preview['image'], 
+                                user_id, 
+                                source='search'
+                            )
+                            
+                            if img_result['success']:
+                                result_text.append(f"![Preview]({img_result['relative_path']})")
+                                result_text.append(f"*{preview.get('site_name', 'Website')} preview*\n")
+                    except Exception as preview_error:
+                        print(f"Preview extraction failed for {url}: {preview_error}")
+                
+                # Add description
+                result_text.append(f"{content[:250]}..." if len(content) > 250 else content)
+                result_text.append("")  # Empty line for spacing
             
             final_result = "\n".join(result_text)
             print(f"📊 Final formatted result length: {len(final_result)} chars")
+            print(f"✅ Search complete with {len(response.get('results', []))} results")
             
             return final_result
             
         except Exception as e:
             error_msg = f"❌ Search failed: {str(e)}"
             print(error_msg)
+            import traceback
+            traceback.print_exc()
             return error_msg
     
     def execute(self, function_args: Dict) -> str:
@@ -127,7 +230,7 @@ def get_tavily_tool() -> TavilySearchTool:
     return _tavily_tool
 
 
-def get_enabled_tools(use_tavily: bool = False, use_web_scraper: bool = False, use_youtube: bool = False, use_data_analyzer: bool = False) -> List[Dict]:
+def get_enabled_tools(use_tavily: bool = False, use_web_scraper: bool = False, use_youtube: bool = False, use_data_analyzer: bool = False, use_image_generator: bool = False) -> List[Dict]:
     """
     Get list of enabled tool definitions
     
@@ -136,6 +239,7 @@ def get_enabled_tools(use_tavily: bool = False, use_web_scraper: bool = False, u
         use_web_scraper: Whether to enable web scraper
         use_youtube: Whether to enable YouTube summarizer
         use_data_analyzer: Whether to enable data analyzer
+        use_image_generator: Whether to enable AI image generation
         
     Returns:
         List of tool definitions for LLM
@@ -170,6 +274,13 @@ def get_enabled_tools(use_tavily: bool = False, use_web_scraper: bool = False, u
             tools.extend(DATA_ANALYZER_TOOLS)
         except Exception as e:
             print(f"⚠️ Warning: Data analyzer not available: {e}")
+    
+    if use_image_generator:
+        try:
+            from backend.tools.image_generator import IMAGE_GENERATION_TOOLS
+            tools.extend(IMAGE_GENERATION_TOOLS)
+        except Exception as e:
+            print(f"⚠️ Warning: Image generator not available: {e}")
     
     return tools
 

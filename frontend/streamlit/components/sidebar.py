@@ -44,8 +44,8 @@ def render_sidebar() -> dict:
         </div>
         """, unsafe_allow_html=True)
         
-        # Minimal icon buttons
-        col1, col2, col3, col4, col5, col6 = st.columns([1, 1, 1, 1, 1, 1])
+        # Minimal icon buttons (two rows)
+        col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
         with col1:
             if st.button("👤", key="profile_btn", use_container_width=True, help="Profile"):
                 st.session_state.show_profile = True
@@ -53,6 +53,7 @@ def render_sidebar() -> dict:
                 st.session_state.show_diagram_generator = False
                 st.session_state.show_memory_manager = False
                 st.session_state.show_insights_panel = False
+                st.session_state.show_image_gallery = False
         with col2:
             if st.button("📁", key="files_btn", use_container_width=True, help="Files"):
                 st.session_state.show_file_manager = True
@@ -60,28 +61,45 @@ def render_sidebar() -> dict:
                 st.session_state.show_diagram_generator = False
                 st.session_state.show_memory_manager = False
                 st.session_state.show_insights_panel = False
+                st.session_state.show_image_gallery = False
         with col3:
-            if st.button("📊", key="diagram_btn", use_container_width=True, help="Diagram Generator"):
+            if st.button("📊", key="diagram_btn", use_container_width=True, help="Diagrams"):
                 st.session_state.show_diagram_generator = True
                 st.session_state.show_profile = False
                 st.session_state.show_file_manager = False
                 st.session_state.show_memory_manager = False
                 st.session_state.show_insights_panel = False
+                st.session_state.show_image_gallery = False
         with col4:
-            if st.button("🧠", key="memory_btn", use_container_width=True, help="Memory System"):
+            if st.button("🖼️", key="gallery_btn", use_container_width=True, help="Image Gallery"):
+                st.session_state.show_image_gallery = True
+                st.session_state.show_profile = False
+                st.session_state.show_file_manager = False
+                st.session_state.show_diagram_generator = False
+                st.session_state.show_memory_manager = False
+                st.session_state.show_insights_panel = False
+        
+        col5, col6, col7, col8 = st.columns([1, 1, 1, 1])
+        with col5:
+            if st.button("🧠", key="memory_btn", use_container_width=True, help="Memory"):
                 st.session_state.show_memory_manager = True
                 st.session_state.show_profile = False
                 st.session_state.show_file_manager = False
                 st.session_state.show_diagram_generator = False
                 st.session_state.show_insights_panel = False
-        with col5:
-            if st.button("💡", key="insights_btn", use_container_width=True, help="Conversation Insights"):
+                st.session_state.show_image_gallery = False
+        with col6:
+            if st.button("💡", key="insights_btn", use_container_width=True, help="Insights"):
                 st.session_state.show_insights_panel = True
                 st.session_state.show_profile = False
                 st.session_state.show_file_manager = False
                 st.session_state.show_diagram_generator = False
                 st.session_state.show_memory_manager = False
-        with col6:
+                st.session_state.show_image_gallery = False
+        with col7:
+            # Placeholder for future features
+            pass
+        with col8:
             if st.button("🚪", key="logout_btn", use_container_width=True, help="Logout"):
                 logout()
         
@@ -269,6 +287,12 @@ def render_sidebar() -> dict:
             help="Analyze CSV/Excel files, create visualizations, get statistics, and generate pandas code"
         )
         
+        use_image_generator = st.checkbox(
+            "Enable AI Image Generator",
+            value=False,
+            help="Generate images from text descriptions using DALL-E 3, Stability AI, and other AI models"
+        )
+        
         st.divider()
         
         # API Key Management
@@ -404,6 +428,7 @@ def render_sidebar() -> dict:
         "use_web_scraper": use_web_scraper,
         "use_youtube": use_youtube,
         "use_data_analyzer": use_data_analyzer,
+        "use_image_generator": use_image_generator,
         **agent_settings  # Merge agent settings
     }
 
