@@ -36,6 +36,7 @@ from frontend.streamlit.components.file_manager import render_file_manager
 from frontend.streamlit.components.diagram_generator import render_diagram_generator
 from frontend.streamlit.components.memory_manager import render_memory_manager
 from frontend.streamlit.components.agent_manager import render_agent_manager
+from frontend.streamlit.components.conversation_insights_panel import render_conversation_insights_panel
 from frontend.streamlit.styles.custom_css import get_custom_css
 
 # Load and encode background image
@@ -110,6 +111,13 @@ elif st.session_state.get('show_agent_manager', False):
     # Add close button
     if st.button("← Back to Chat", key="close_agent_manager"):
         st.session_state.show_agent_manager = False
+        st.rerun()
+elif st.session_state.get('show_insights_panel', False):
+    render_conversation_insights_panel()
+    
+    # Add close button
+    if st.button("← Back to Chat", key="close_insights_panel"):
+        st.session_state.show_insights_panel = False
         st.rerun()
 else:
     # Render main chat interface

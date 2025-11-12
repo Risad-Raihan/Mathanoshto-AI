@@ -45,32 +45,43 @@ def render_sidebar() -> dict:
         """, unsafe_allow_html=True)
         
         # Minimal icon buttons
-        col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 1])
+        col1, col2, col3, col4, col5, col6 = st.columns([1, 1, 1, 1, 1, 1])
         with col1:
             if st.button("👤", key="profile_btn", use_container_width=True, help="Profile"):
                 st.session_state.show_profile = True
                 st.session_state.show_file_manager = False
                 st.session_state.show_diagram_generator = False
                 st.session_state.show_memory_manager = False
+                st.session_state.show_insights_panel = False
         with col2:
             if st.button("📁", key="files_btn", use_container_width=True, help="Files"):
                 st.session_state.show_file_manager = True
                 st.session_state.show_profile = False
                 st.session_state.show_diagram_generator = False
                 st.session_state.show_memory_manager = False
+                st.session_state.show_insights_panel = False
         with col3:
             if st.button("📊", key="diagram_btn", use_container_width=True, help="Diagram Generator"):
                 st.session_state.show_diagram_generator = True
                 st.session_state.show_profile = False
                 st.session_state.show_file_manager = False
                 st.session_state.show_memory_manager = False
+                st.session_state.show_insights_panel = False
         with col4:
             if st.button("🧠", key="memory_btn", use_container_width=True, help="Memory System"):
                 st.session_state.show_memory_manager = True
                 st.session_state.show_profile = False
                 st.session_state.show_file_manager = False
                 st.session_state.show_diagram_generator = False
+                st.session_state.show_insights_panel = False
         with col5:
+            if st.button("💡", key="insights_btn", use_container_width=True, help="Conversation Insights"):
+                st.session_state.show_insights_panel = True
+                st.session_state.show_profile = False
+                st.session_state.show_file_manager = False
+                st.session_state.show_diagram_generator = False
+                st.session_state.show_memory_manager = False
+        with col6:
             if st.button("🚪", key="logout_btn", use_container_width=True, help="Logout"):
                 logout()
         
