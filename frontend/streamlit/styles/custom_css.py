@@ -15,36 +15,36 @@ def get_custom_css(bg_image_base64: str = None, dark_mode: bool = True) -> str:
         str: Complete CSS string
     """
     
-    # Color palette based on theme - Green & Beige
+    # Color palette based on theme - Beige & Maroon Elegance
     if dark_mode:
         colors = {
-            'primary': '#4a7c59',        # Forest green
-            'secondary': '#6b8e23',      # Olive green
-            'accent': '#8fbc8f',         # Light sea green
-            'bg-dark': '#2a3426',        # Dark olive
-            'bg-medium': '#3d4a36',      # Medium olive
-            'bg-light': '#4f5d46',       # Light olive
-            'text-primary': '#f5f5dc',   # Beige
-            'text-secondary': '#d4c5a9', # Light beige
-            'success': '#52b788',        # Green success
-            'warning': '#e9c46a',        # Beige warning
-            'error': '#e76f51',          # Coral error
-            'info': '#7fa99b'            # Teal info
+            'primary': '#850E35',        # Deep Maroon
+            'secondary': '#EE6983',      # Coral Pink
+            'accent': '#FFC4C4',         # Light Pink
+            'bg-dark': '#1a0a0f',        # Very dark maroon
+            'bg-medium': '#2d1520',      # Dark maroon-brown
+            'bg-light': '#3d1f2a',       # Medium maroon-brown
+            'text-primary': '#FCF5EE',   # Cream beige
+            'text-secondary': '#e8d5c4', # Soft beige
+            'success': '#52b788',        # Green (kept for success)
+            'warning': '#f4a261',        # Warm orange
+            'error': '#c1121f',          # Deep red
+            'info': '#EE6983'            # Coral pink
         }
     else:
         colors = {
-            'primary': '#52b788',        # Medium green
-            'secondary': '#8fbc8f',      # Light green
-            'accent': '#6b8e23',         # Olive
-            'bg-dark': '#faf8f3',        # Light beige
-            'bg-medium': '#f5f1e8',      # Medium beige
-            'bg-light': '#ede8dc',       # Dark beige
-            'text-primary': '#2a3426',   # Dark olive
-            'text-secondary': '#5a6352', # Medium olive
+            'primary': '#850E35',        # Deep Maroon
+            'secondary': '#EE6983',      # Coral Pink
+            'accent': '#a01d48',         # Medium maroon
+            'bg-dark': '#FCF5EE',        # Cream beige (lightest)
+            'bg-medium': '#f9ebe0',      # Light beige
+            'bg-light': '#f0dfd0',       # Medium beige
+            'text-primary': '#2d1520',   # Very dark maroon
+            'text-secondary': '#6b2d42', # Medium maroon
             'success': '#52b788',        # Green
-            'warning': '#e9c46a',        # Beige warning
-            'error': '#e76f51',          # Coral
-            'info': '#7fa99b'            # Teal
+            'warning': '#f4a261',        # Warm orange
+            'error': '#c1121f',          # Deep red
+            'info': '#850E35'            # Deep maroon
         }
     
     # Background CSS
@@ -87,10 +87,10 @@ def get_custom_css(bg_image_base64: str = None, dark_mode: bool = True) -> str:
         --border-radius-lg: 20px;
         --border-radius-xl: 25px;
         
-        --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
-        --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.15);
-        --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.2);
-        --shadow-neon: 0 0 20px rgba(0, 212, 255, 0.3);
+        --shadow-sm: 0 2px 8px rgba(133, 14, 53, 0.1);
+        --shadow-md: 0 4px 16px rgba(133, 14, 53, 0.15);
+        --shadow-lg: 0 8px 32px rgba(133, 14, 53, 0.2);
+        --shadow-neon: 0 0 20px rgba(133, 14, 53, 0.3);
         
         --transition-fast: 0.15s ease;
         --transition-normal: 0.3s ease;
@@ -188,15 +188,15 @@ def get_custom_css(bg_image_base64: str = None, dark_mode: bool = True) -> str:
         box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3) !important;
     }}
     
-    /* User message - Gradient accent */
+    /* User message - Maroon gradient */
     .stChatMessage[data-testid="user-message"] {{
-        background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(157, 78, 221, 0.15)) !important;
+        background: linear-gradient(135deg, rgba(133, 14, 53, 0.12), rgba(238, 105, 131, 0.12)) !important;
         border-left: 4px solid var(--color-primary) !important;
     }}
     
-    /* Assistant message - Different gradient */
+    /* Assistant message - Pink/Coral gradient */
     .stChatMessage[data-testid="assistant-message"] {{
-        background: linear-gradient(135deg, rgba(157, 78, 221, 0.15), rgba(255, 107, 107, 0.15)) !important;
+        background: linear-gradient(135deg, rgba(238, 105, 131, 0.12), rgba(255, 196, 196, 0.12)) !important;
         border-left: 4px solid var(--color-secondary) !important;
     }}
     
@@ -266,18 +266,18 @@ def get_custom_css(bg_image_base64: str = None, dark_mode: bool = True) -> str:
        METRICS/TOKEN COUNTER - Animated
        ============================================ */
     [data-testid="metric-container"] {{
-        background: linear-gradient(135deg, rgba(0, 212, 255, 0.08), rgba(157, 78, 221, 0.08));
-        border: 2px solid rgba(0, 212, 255, 0.25);
+        background: linear-gradient(135deg, rgba(133, 14, 53, 0.08), rgba(238, 105, 131, 0.08));
+        border: 2px solid rgba(133, 14, 53, 0.3);
         border-radius: var(--border-radius-md);
         padding: 1rem;
         backdrop-filter: blur(10px);
-        box-shadow: var(--shadow-neon);
+        box-shadow: 0 2px 12px rgba(133, 14, 53, 0.15);
         transition: all var(--transition-normal);
     }}
     
     [data-testid="metric-container"]:hover {{
         transform: translateY(-5px);
-        box-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
+        box-shadow: 0 0 30px rgba(133, 14, 53, 0.4);
         border-color: var(--color-primary);
     }}
     
@@ -316,7 +316,7 @@ def get_custom_css(bg_image_base64: str = None, dark_mode: bool = True) -> str:
     
     .stButton button:hover {{
         transform: scale(1.05);
-        box-shadow: 0 0 30px rgba(0, 212, 255, 0.6) !important;
+        box-shadow: 0 0 30px rgba(133, 14, 53, 0.5) !important;
     }}
     
     .stButton button:active {{
@@ -364,7 +364,7 @@ def get_custom_css(bg_image_base64: str = None, dark_mode: bool = True) -> str:
        ============================================ */
     .stTextInput input, .stTextArea textarea, .stSelectbox select, .stNumberInput input {{
         background: rgba(255, 255, 255, 0.08) !important;
-        border: 2px solid rgba(0, 212, 255, 0.25) !important;
+        border: 2px solid rgba(133, 14, 53, 0.25) !important;
         border-radius: var(--border-radius-md) !important;
         color: var(--color-text-primary) !important;
         backdrop-filter: blur(10px) !important;
@@ -373,7 +373,7 @@ def get_custom_css(bg_image_base64: str = None, dark_mode: bool = True) -> str:
     
     .stTextInput input:focus, .stTextArea textarea:focus, .stSelectbox select:focus {{
         border-color: var(--color-primary) !important;
-        box-shadow: 0 0 20px rgba(0, 212, 255, 0.3) !important;
+        box-shadow: 0 0 20px rgba(133, 14, 53, 0.3) !important;
     }}
     
     /* ============================================
@@ -419,14 +419,14 @@ def get_custom_css(bg_image_base64: str = None, dark_mode: bool = True) -> str:
        EXPANDER Styling
        ============================================ */
     .streamlit-expanderHeader {{
-        background: rgba(0, 212, 255, 0.08) !important;
+        background: rgba(133, 14, 53, 0.08) !important;
         border-radius: var(--border-radius-md) !important;
-        border: 1px solid rgba(0, 212, 255, 0.25) !important;
+        border: 1px solid rgba(133, 14, 53, 0.25) !important;
         transition: all var(--transition-fast) !important;
     }}
     
     .streamlit-expanderHeader:hover {{
-        background: rgba(0, 212, 255, 0.12) !important;
+        background: rgba(133, 14, 53, 0.12) !important;
         border-color: var(--color-primary) !important;
     }}
     
@@ -495,8 +495,8 @@ def get_custom_css(bg_image_base64: str = None, dark_mode: bool = True) -> str:
        CONVERSATION CARDS
        ============================================ */
     .conversation-card {{
-        background: linear-gradient(135deg, rgba(0, 212, 255, 0.05), rgba(157, 78, 221, 0.05));
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: linear-gradient(135deg, rgba(133, 14, 53, 0.05), rgba(238, 105, 131, 0.05));
+        border: 1px solid rgba(133, 14, 53, 0.2);
         border-radius: var(--border-radius-md);
         padding: 1rem;
         margin: 0.75rem 0;
@@ -611,8 +611,8 @@ def get_custom_css(bg_image_base64: str = None, dark_mode: bool = True) -> str:
         align-items: center;
         gap: 0.5rem;
         padding: 0.5rem 1rem;
-        background: rgba(0, 212, 255, 0.1);
-        border: 1px solid rgba(0, 212, 255, 0.3);
+        background: rgba(133, 14, 53, 0.1);
+        border: 1px solid rgba(133, 14, 53, 0.3);
         border-radius: var(--border-radius-lg);
         animation: pulse 2s infinite;
     }}
@@ -621,7 +621,7 @@ def get_custom_css(bg_image_base64: str = None, dark_mode: bool = True) -> str:
         display: inline-block;
         width: 16px;
         height: 16px;
-        border: 2px solid rgba(0, 212, 255, 0.3);
+        border: 2px solid rgba(133, 14, 53, 0.3);
         border-top-color: var(--color-primary);
         border-radius: 50%;
         animation: spin 1s linear infinite;
