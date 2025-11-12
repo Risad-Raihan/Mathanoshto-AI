@@ -1,0 +1,264 @@
+{
+  "meta": {
+    "project": "Mathanoshto AI",
+    "date": "2025-11-12",
+    "prepared_by": "Development Team"
+  },
+  "product_overview": "Mathanoshto AI is an advanced, production-grade conversational AI platform that provides intelligent, context-aware assistance capable of complex tasks across multiple domains. It integrates multiple LLM providers, a robust long-term memory system, retrieval-augmented generation (RAG), specialized AI agents, multimodal support, and advanced tools for web search, document processing, and data analysis with a modern user interface.",
+  "core_goals": [
+    "Provide intelligent and context-aware AI responses using advanced LLM providers including OpenAI, Google Gemini, and Anthropic.",
+    "Implement a semantic long-term memory system that learns user preferences and contextual information across sessions.",
+    "Support multiple specialized AI agents with customizable system prompts and tool permissions tailored for different professional domains.",
+    "Enable multimodal input and output including text, images, and documents, with image upload, generation, and vision AI capabilities.",
+    "Integrate advanced tools like web search (Tavily), web scraping, YouTube summarization, data analysis, and diagram generation to extend AI functionality.",
+    "Deliver a modern, intuitive, and responsive user interface with rich features and conversation management.",
+    "Ensure robust security, privacy, and data management compliant with industry best practices.",
+    "Achieve high performance, reliability, and scalability to support concurrent users and real-time AI interactions."
+  ],
+  "key_features": [
+    "Multi-provider Conversational AI chat interface with multi-turn context and real-time streaming responses.",
+    "Long-term semantic memory system with automatic and manual memory management, semantic search, and importance-based memory injection.",
+    "Production-grade RAG system supporting multi-format file uploads, document chunking with multiple strategies, hybrid retrieval and citation generation.",
+    "Specialized AI Agent system with 10+ predefined expert agents and support for custom agent creation, versioning, and tool permission management.",
+    "Comprehensive multimodal image system supporting upload, clipboard paste, AI generation (DALL-E 3, Stability AI), and vision model integration.",
+    "Advanced tool integrations for web search, web scraping, YouTube video summarization, data analysis with visualization, and diagram generation.",
+    "AI-powered smart conversation features including summarization, suggestions, prompt libraries, insights, and export.",
+    "Full file management system for uploading, previewing, processing, and managing diverse file types with metadata, thumbnail generation, and integration with RAG."
+  ],
+  "user_flow_summary": [
+    "User registers or logs into the platform and sets up profile and preferences including API keys and selected LLM providers.",
+    "User starts or continues conversations in the chat interface, selecting AI agents and configuring model and parameters as needed.",
+    "User uploads files (PDF, DOCX, CSV, etc.) which are processed via RAG system for chunking, embedding, and semantic search enabling context-aware Q&A with citations.",
+    "User interacts with memories by creating manual entries or relying on system-extracted memories that are semantically searched and injected into conversation context.",
+    "User utilizes advanced tools including Tavily web search, web scraping, YouTube video summarization, data analysis, and diagram generation from the UI or agent sessions.",
+    "User uploads and manages images including AI-generated images, and can engage vision-capable AI models for image understanding.",
+    "User accesses smart conversation features like conversation summarization, suggestions, insights, and can export conversation data in multiple formats.",
+    "System monitors usage, tracks analytics, and manages user and session data securely, ensuring performance and scalability."
+  ],
+  "validation_criteria": [
+    "Chat AI must respond with <2s latency for streaming first token.",
+    "RAG system should retrieve relevant document chunks with at least 85% relevance accuracy.",
+    "Memory system must retrieve and inject top-K relevant memories with configurable similarity threshold and support up to 5 pinned memories per user.",
+    "Agent system must allow creation, editing, deletion, and usage tracking of custom agents alongside predefined ones.",
+    "Image system must support simultaneous multiple image uploads, clipboard pastes, and AI image generation with proper validation and storage.",
+    "External tool integrations must provide accurate results with fallback handling for API failures.",
+    "Conversation summarization and suggestions should generate contextually relevant outputs with user acceptability over 80% in testing.",
+    "File upload and processing must handle supported file formats within 30 seconds for files under 10MB.",
+    "Security tests must show no leakage of sensitive data, enforce authentication, authorization, and prevent common web vulnerabilities.",
+    "UI must be responsive, accessible (WCAG 2.1 AA), and support dark/light modes with clear user feedback and error messages."
+  ],
+  "code_summary": {
+    "tech_stack": [
+      "Python 3.12",
+      "Streamlit",
+      "SQLAlchemy",
+      "ChromaDB",
+      "SQLite",
+      "OpenAI API",
+      "Google Gemini API",
+      "Tavily Search API",
+      "Sentence Transformers",
+      "PyTorch",
+      "Beautiful Soup",
+      "Playwright",
+      "Matplotlib",
+      "Plotly",
+      "Seaborn",
+      "Pillow"
+    ],
+    "features": [
+      {
+        "name": "Chat Interface",
+        "description": "Main conversational interface with support for text and image input, message history, and conversation management",
+        "files": [
+          "frontend/streamlit/components/chat.py",
+          "frontend/streamlit/app.py",
+          "backend/core/chat_manager.py"
+        ]
+      },
+      {
+        "name": "Multi-Provider LLM Support",
+        "description": "Supports multiple LLM providers including OpenAI (GPT-4, GPT-3.5) and Google Gemini with vision capabilities",
+        "files": [
+          "backend/providers/openai_provider.py",
+          "backend/providers/gemini_provider.py",
+          "backend/providers/base.py",
+          "backend/core/model_factory.py"
+        ]
+      },
+      {
+        "name": "Tavily Web Search Integration",
+        "description": "Web search tool powered by Tavily API with image preview support and link metadata extraction",
+        "files": [
+          "backend/tools/tavily_search.py",
+          "backend/utils/link_preview.py"
+        ]
+      },
+      {
+        "name": "Image Handling System",
+        "description": "Comprehensive multimodal image system supporting upload, generation (DALL-E), clipboard paste, and display with galleries",
+        "files": [
+          "backend/core/image_handler.py",
+          "backend/tools/image_generator.py",
+          "frontend/streamlit/components/image_gallery.py"
+        ]
+      },
+      {
+        "name": "RAG (Retrieval-Augmented Generation) System",
+        "description": "Advanced RAG system with document chunking, embedding, vector search, reranking, and citation support",
+        "files": [
+          "backend/core/rag_processor.py",
+          "backend/core/rag_retriever.py",
+          "backend/core/rag_embedder.py",
+          "backend/core/rag_chunker.py",
+          "backend/core/rag_optimizer.py",
+          "backend/core/rag_reranker.py",
+          "backend/core/rag_citations.py",
+          "backend/database/rag_models.py",
+          "backend/database/rag_operations.py"
+        ]
+      },
+      {
+        "name": "File Management System",
+        "description": "Upload, process, and manage various file types (PDF, DOCX, CSV, Excel, images) with thumbnail generation and text extraction",
+        "files": [
+          "backend/core/file_manager.py",
+          "backend/core/file_rag.py",
+          "backend/utils/file_parser.py",
+          "backend/utils/file_storage.py",
+          "backend/utils/thumbnail_generator.py",
+          "backend/database/file_operations.py",
+          "frontend/streamlit/components/file_manager.py"
+        ]
+      },
+      {
+        "name": "Memory System",
+        "description": "Long-term memory extraction and management to remember important information across conversations",
+        "files": [
+          "backend/core/memory_manager.py",
+          "backend/core/memory_extractor.py",
+          "backend/database/memory_models.py",
+          "backend/database/memory_operations.py",
+          "frontend/streamlit/components/memory_manager.py"
+        ]
+      },
+      {
+        "name": "Agent System",
+        "description": "Configurable AI agents with custom system prompts, tools, and personas for specialized tasks",
+        "files": [
+          "backend/core/agent_manager.py",
+          "backend/data/predefined_agents.py",
+          "backend/database/agent_models.py",
+          "frontend/streamlit/components/agent_manager.py"
+        ]
+      },
+      {
+        "name": "Conversation Insights",
+        "description": "Automatic analysis of conversations with summaries, key points extraction, sentiment analysis, and action items",
+        "files": [
+          "backend/core/conversation_insights.py",
+          "backend/core/conversation_suggestions.py",
+          "backend/core/conversation_summarizer.py",
+          "backend/database/conversation_insights_models.py",
+          "frontend/streamlit/components/conversation_insights_panel.py"
+        ]
+      },
+      {
+        "name": "Conversation Export",
+        "description": "Export conversations in multiple formats (Markdown, HTML, JSON) with timestamp and metadata",
+        "files": [
+          "backend/core/conversation_exporter.py"
+        ]
+      },
+      {
+        "name": "Diagram Generation",
+        "description": "Generate various diagram types (mermaid, plantuml, graphviz, etc.) via Kroki service integration",
+        "files": [
+          "backend/tools/diagram_generator.py",
+          "frontend/streamlit/components/diagram_generator.py"
+        ]
+      },
+      {
+        "name": "Data Analysis Tools",
+        "description": "Analyze CSV/Excel data with automatic visualization generation (matplotlib, plotly, seaborn)",
+        "files": [
+          "backend/tools/data_analyzer.py",
+          "backend/tools/data_analyzer_integration.py"
+        ]
+      },
+      {
+        "name": "Web Scraping Tools",
+        "description": "Multiple web scraping methods including BeautifulSoup, Playwright, Firecrawl with smart content extraction",
+        "files": [
+          "backend/tools/web_scraper.py",
+          "backend/tools/scraper_tool.py",
+          "backend/tools/firecrawl_scraper.py"
+        ]
+      },
+      {
+        "name": "YouTube Integration",
+        "description": "Extract and analyze YouTube video transcripts and metadata for content understanding",
+        "files": [
+          "backend/tools/youtube_tool.py",
+          "backend/tools/youtube_integration.py"
+        ]
+      },
+      {
+        "name": "User Authentication",
+        "description": "User registration, login, and session management with bcrypt password hashing",
+        "files": [
+          "backend/auth/auth_utils.py",
+          "backend/database/user_operations.py",
+          "frontend/streamlit/components/login.py",
+          "frontend/streamlit/components/profile.py"
+        ]
+      },
+      {
+        "name": "Prompt Library",
+        "description": "Pre-built prompt templates for common tasks with categorization and search functionality",
+        "files": [
+          "backend/core/prompt_library.py"
+        ]
+      },
+      {
+        "name": "Settings & Configuration",
+        "description": "Centralized configuration management with environment variables and model configuration",
+        "files": [
+          "backend/config/settings.py",
+          "backend/config/models.yaml"
+        ]
+      },
+      {
+        "name": "Database Layer",
+        "description": "SQLAlchemy-based database models and operations for conversations, users, files, RAG, memory, and agents",
+        "files": [
+          "backend/database/models.py",
+          "backend/database/operations.py",
+          "backend/database/user_operations.py",
+          "backend/database/file_operations.py",
+          "backend/database/rag_operations.py",
+          "backend/database/memory_operations.py",
+          "backend/database/agent_models.py",
+          "backend/database/conversation_insights_models.py"
+        ]
+      },
+      {
+        "name": "UI Components",
+        "description": "Reusable Streamlit components for sidebar, header, and UI utilities with custom CSS styling",
+        "files": [
+          "frontend/streamlit/components/sidebar.py",
+          "frontend/streamlit/components/header.py",
+          "frontend/streamlit/components/ui_utils.py",
+          "frontend/streamlit/styles/custom_css.py"
+        ]
+      },
+      {
+        "name": "API Key Management",
+        "description": "Secure management of API keys for various services (OpenAI, Gemini, Tavily, etc.)",
+        "files": [
+          "frontend/streamlit/components/api_keys.py"
+        ]
+      }
+    ]
+  }
+}

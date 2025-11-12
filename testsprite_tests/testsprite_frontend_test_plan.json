@@ -1,0 +1,456 @@
+[
+  {
+    "id": "TC001",
+    "title": "User Registration and Login",
+    "description": "Verify user can register with valid credentials and log in successfully with those credentials",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to registration page"
+      },
+      {
+        "type": "action",
+        "description": "Enter valid user information and submit registration"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify registration completes with confirmation message"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to login page"
+      },
+      {
+        "type": "action",
+        "description": "Enter valid credentials and submit login"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify user is logged in and redirected to main dashboard"
+      }
+    ]
+  },
+  {
+    "id": "TC002",
+    "title": "Login Failure with Invalid Credentials",
+    "description": "Ensure login fails gracefully when incorrect username or password is entered",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to login page"
+      },
+      {
+        "type": "action",
+        "description": "Enter invalid username or password"
+      },
+      {
+        "type": "action",
+        "description": "Click login button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify error message indicating invalid credentials is displayed"
+      }
+    ]
+  },
+  {
+    "id": "TC003",
+    "title": "Multi-Provider LLM Response Latency",
+    "description": "Test that AI chat responses from OpenAI, Google Gemini, and Anthropic LLM providers stream first token in under 2 seconds",
+    "category": "performance",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Select each LLM provider in settings"
+      },
+      {
+        "type": "action",
+        "description": "Start a multi-turn conversation requesting AI response"
+      },
+      {
+        "type": "assertion",
+        "description": "Validate the first token of streaming response returns within 2 seconds"
+      }
+    ]
+  },
+  {
+    "id": "TC004",
+    "title": "Long-Term Memory Injection and Retrieval Accuracy",
+    "description": "Verify long-term semantic memory system indexes, retrieves, and injects relevant memories with configurable similarity threshold and supports pinned memories",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Create multiple manual memory entries and pin up to 5 entries"
+      },
+      {
+        "type": "action",
+        "description": "Start a conversation and trigger memory retrieval"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm top-K relevant memories are retrieved accurately based on similarity threshold"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify pinned memories are always included in injection"
+      }
+    ]
+  },
+  {
+    "id": "TC005",
+    "title": "RAG System Document Upload and Retrieval",
+    "description": "Test multi-format document upload, chunking, embedding, hybrid retrieval, and citation generation with >=85% relevance accuracy",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Upload documents of type PDF, DOCX, CSV, Excel under 10MB"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify document chunking completes successfully with multiple strategies"
+      },
+      {
+        "type": "action",
+        "description": "Perform semantic search queries on uploaded documents"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm retrieved chunks have at least 85% relevance accuracy"
+      },
+      {
+        "type": "assertion",
+        "description": "Validate citations are correctly generated and references appear in AI responses"
+      }
+    ]
+  },
+  {
+    "id": "TC006",
+    "title": "Specialized AI Agent Creation and Usage",
+    "description": "Verify user can create, edit, delete custom AI agents with system prompts and tool permissions, and use them in conversations",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to agent management interface"
+      },
+      {
+        "type": "action",
+        "description": "Create a new custom agent with specified system prompts and tool permissions"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm the new agent is saved and appears in agent list"
+      },
+      {
+        "type": "action",
+        "description": "Edit the custom agent to update prompts and permissions"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify changes are saved successfully"
+      },
+      {
+        "type": "action",
+        "description": "Delete the custom agent and confirm it is removed"
+      },
+      {
+        "type": "action",
+        "description": "Start a conversation selecting a predefined and custom agent"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify agent responses use updated prompts and permissions"
+      }
+    ]
+  },
+  {
+    "id": "TC007",
+    "title": "Image Upload, Generation, and Vision AI Capabilities",
+    "description": "Test multiple simultaneous image uploads, clipboard paste, AI generation using DALL-E 3 and Stability AI, and vision model integration",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Upload multiple images simultaneously using UI"
+      },
+      {
+        "type": "assertion",
+        "description": "Validate images are uploaded, stored correctly, and thumbnails generated"
+      },
+      {
+        "type": "action",
+        "description": "Paste images from clipboard into input fields"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify pasted images appear correctly in conversation"
+      },
+      {
+        "type": "action",
+        "description": "Request AI image generation via DALL-E 3 and Stability AI"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm generated images render properly and are stored"
+      },
+      {
+        "type": "action",
+        "description": "Use vision AI models to analyze uploaded images"
+      },
+      {
+        "type": "assertion",
+        "description": "Check vision AI outputs are accurate and contextually relevant"
+      }
+    ]
+  },
+  {
+    "id": "TC008",
+    "title": "External Tools Integration and Failure Handling",
+    "description": "Validate functionality and fallback handling of integrated tools: Tavily web search, web scraping, YouTube summarization, data analysis, diagram generation",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Perform web search queries via Tavily"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify accurate web search results and image previews are displayed"
+      },
+      {
+        "type": "action",
+        "description": "Run web scraping tasks using multiple scraping methods"
+      },
+      {
+        "type": "assertion",
+        "description": "Ensure scraped content is extracted and formatted correctly"
+      },
+      {
+        "type": "action",
+        "description": "Summarize YouTube video transcripts and metadata"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm summaries are coherent and reflect video contents"
+      },
+      {
+        "type": "action",
+        "description": "Conduct data analysis on uploaded CSV or Excel files"
+      },
+      {
+        "type": "assertion",
+        "description": "Validate correct generation of charts and visualizations"
+      },
+      {
+        "type": "action",
+        "description": "Generate diagrams via Kroki integration specifying various formats"
+      },
+      {
+        "type": "assertion",
+        "description": "Check diagrams render accurately according to input"
+      },
+      {
+        "type": "action",
+        "description": "Simulate API failures for external tools"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify system displays graceful fallback messages without crashing"
+      }
+    ]
+  },
+  {
+    "id": "TC009",
+    "title": "Conversation Summarization and Suggestions",
+    "description": "Ensure summarization and suggestion features generate contextually relevant outputs with user acceptability over 80%",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Conduct multi-turn conversations with diverse topics"
+      },
+      {
+        "type": "action",
+        "description": "Trigger conversation summarization and suggestion generation"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify summaries and suggestions accurately reflect conversation context"
+      },
+      {
+        "type": "assertion",
+        "description": "In user testing, check acceptability rating is >=80%"
+      }
+    ]
+  },
+  {
+    "id": "TC010",
+    "title": "File Upload and Processing Performance",
+    "description": "Test file upload, preview, processing, and RAG integration for supported file formats with processing times under 30 seconds for files <10MB",
+    "category": "performance",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Upload supported file types including PDF, DOCX, CSV, Excel, images under 10MB"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify file preview and metadata display correctly"
+      },
+      {
+        "type": "assertion",
+        "description": "Ensure processing pipeline completes within 30 seconds"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm processed data is integrated into RAG for semantic search"
+      }
+    ]
+  },
+  {
+    "id": "TC011",
+    "title": "Security and Data Privacy Enforcement",
+    "description": "Test authentication, authorization, data privacy, and protection against common web vulnerabilities",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Attempt unauthorized access to protected resources"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify access is denied and proper error messages are presented"
+      },
+      {
+        "type": "action",
+        "description": "Test password handling and storage for registration and login"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm passwords are hashed with bcrypt and never stored in plaintext"
+      },
+      {
+        "type": "action",
+        "description": "Conduct penetration tests targeting common web vulnerabilities (XSS, CSRF, SQL injection)"
+      },
+      {
+        "type": "assertion",
+        "description": "Ensure no security vulnerabilities are exploitable"
+      },
+      {
+        "type": "action",
+        "description": "Check sensitive data leakages in logs, UI, and API responses"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify no sensitive data is exposed and encryption is enforced where necessary"
+      }
+    ]
+  },
+  {
+    "id": "TC012",
+    "title": "User Interface Responsiveness and Accessibility",
+    "description": "Validate UI responsiveness across devices, WCAG 2.1 AA accessibility compliance, dark/light mode support, and clear user feedback",
+    "category": "ui",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Access the platform from multiple devices and screen sizes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the UI is responsive and adapts without layout issues"
+      },
+      {
+        "type": "action",
+        "description": "Evaluate UI using accessibility tools to check WCAG 2.1 AA compliance"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm accessibility criteria are met including keyboard navigation and screen reader support"
+      },
+      {
+        "type": "action",
+        "description": "Switch between dark and light modes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify color schemes change appropriately and all text remains readable"
+      },
+      {
+        "type": "action",
+        "description": "Trigger various error conditions in forms and interactions"
+      },
+      {
+        "type": "assertion",
+        "description": "Check error messages and feedback are clear and informative"
+      }
+    ]
+  },
+  {
+    "id": "TC013",
+    "title": "API Key Management Security and Functionality",
+    "description": "Ensure secure storage, retrieval, and management of user API keys with encryption and access control",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Add API keys for OpenAI, Gemini, Tavily, and other services via UI"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify keys are encrypted in storage and not visible in plain text in UI or database"
+      },
+      {
+        "type": "action",
+        "description": "Attempt to retrieve or modify API keys without proper authorization"
+      },
+      {
+        "type": "assertion",
+        "description": "Ensure access is denied"
+      }
+    ]
+  },
+  {
+    "id": "TC014",
+    "title": "Conversation Export Functionality",
+    "description": "Test export of conversations in Markdown, HTML, and JSON formats with correct timestamps and metadata",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Open a conversation and request export in Markdown format"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm exported file contains correct conversation text, timestamps, and metadata"
+      },
+      {
+        "type": "action",
+        "description": "Repeat export process for HTML and JSON formats"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify data integrity and formatting correctness in all exported files"
+      }
+    ]
+  }
+]

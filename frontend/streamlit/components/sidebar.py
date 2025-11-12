@@ -3,7 +3,8 @@ Sidebar component with settings and controls
 """
 import streamlit as st
 from backend.core.model_factory import model_factory
-from backend.database.operations import ConversationDB, MessageDB
+from backend.database.operations import ConversationDB, MessageDB, get_db
+from backend.core.agent_manager import get_agent_manager
 from frontend.streamlit.components.ui_utils import (
     render_conversation_card,
     render_empty_state,
@@ -43,19 +44,153 @@ def render_sidebar() -> dict:
         </div>
         """, unsafe_allow_html=True)
         
-        # Minimal icon buttons
-        col1, col2, col3 = st.columns([1, 1, 1])
+        # Minimal icon buttons (two rows)
+        col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
         with col1:
             if st.button("👤", key="profile_btn", use_container_width=True, help="Profile"):
                 st.session_state.show_profile = True
                 st.session_state.show_file_manager = False
+                st.session_state.show_diagram_generator = False
+                st.session_state.show_memory_manager = False
+                st.session_state.show_insights_panel = False
+                st.session_state.show_image_gallery = False
         with col2:
             if st.button("📁", key="files_btn", use_container_width=True, help="Files"):
                 st.session_state.show_file_manager = True
                 st.session_state.show_profile = False
+                st.session_state.show_diagram_generator = False
+                st.session_state.show_memory_manager = False
+                st.session_state.show_insights_panel = False
+                st.session_state.show_image_gallery = False
         with col3:
+            if st.button("📊", key="diagram_btn", use_container_width=True, help="Diagrams"):
+                st.session_state.show_diagram_generator = True
+                st.session_state.show_profile = False
+                st.session_state.show_file_manager = False
+                st.session_state.show_memory_manager = False
+                st.session_state.show_insights_panel = False
+                st.session_state.show_image_gallery = False
+        with col4:
+            if st.button("🖼️", key="gallery_btn", use_container_width=True, help="Image Gallery"):
+                st.session_state.show_image_gallery = True
+                st.session_state.show_profile = False
+                st.session_state.show_file_manager = False
+                st.session_state.show_diagram_generator = False
+                st.session_state.show_memory_manager = False
+                st.session_state.show_insights_panel = False
+        
+        col5, col6, col7, col8 = st.columns([1, 1, 1, 1])
+        with col5:
+            if st.button("🧠", key="memory_btn", use_container_width=True, help="Memory"):
+                st.session_state.show_memory_manager = True
+                st.session_state.show_profile = False
+                st.session_state.show_file_manager = False
+                st.session_state.show_diagram_generator = False
+                st.session_state.show_insights_panel = False
+                st.session_state.show_image_gallery = False
+        with col6:
+            if st.button("💡", key="insights_btn", use_container_width=True, help="Insights"):
+                st.session_state.show_insights_panel = True
+                st.session_state.show_profile = False
+                st.session_state.show_file_manager = False
+                st.session_state.show_diagram_generator = False
+                st.session_state.show_memory_manager = False
+                st.session_state.show_image_gallery = False
+        with col7:
+            # Placeholder for future features
+            pass
+        with col8:
             if st.button("🚪", key="logout_btn", use_container_width=True, help="Logout"):
                 logout()
+        
+        st.divider()
+        
+        # 🤖 AI Agent Selection
+        st.subheader("🤖 AI Agent")
+        
+        # Load agents from database
+        try:
+            db = get_db()
+            agent_manager = get_agent_manager(db)
+            agents = agent_manager.get_all_agents(
+                is_active=True,
+                include_custom=True,
+                user_id=user_id
+            )
+            db.close()
+            
+            if agents:
+                # Group agents by category
+                categories = {}
+                for agent in agents:
+                    if agent.category not in categories:
+                        categories[agent.category] = []
+                    categories[agent.category].append(agent)
+                
+                # Agent selection dropdown with emoji and name
+                agent_options = {
+                    f"{agent.emoji} {agent.name}": agent.id
+                    for agent in agents
+                }
+                
+                # Add "None" option for custom settings
+                agent_options = {"⚙️ Custom Settings (Manual)": None, **agent_options}
+                
+                # Get currently selected agent from session state
+                current_selection = st.session_state.get('selected_agent_id', None)
+                current_agent_name = None
+                
+                if current_selection:
+                    for name, agent_id in agent_options.items():
+                        if agent_id == current_selection:
+                            current_agent_name = name
+                            break
+                
+                if not current_agent_name:
+                    current_agent_name = "⚙️ Custom Settings (Manual)"
+                
+                selected_agent_name = st.selectbox(
+                    "Select Agent",
+                    list(agent_options.keys()),
+                    index=list(agent_options.keys()).index(current_agent_name),
+                    help="Choose a specialized AI agent for your task"
+                )
+                
+                selected_agent_id = agent_options[selected_agent_name]
+                st.session_state.selected_agent_id = selected_agent_id
+                
+                # Show agent info if agent selected
+                if selected_agent_id:
+                    selected_agent = next((a for a in agents if a.id == selected_agent_id), None)
+                    if selected_agent:
+                        with st.expander("ℹ️ Agent Info", expanded=False):
+                            st.markdown(f"**{selected_agent.emoji} {selected_agent.name}**")
+                            st.write(selected_agent.description)
+                            st.caption(f"**Category:** {selected_agent.category.title()}")
+                            st.caption(f"**Tone:** {selected_agent.tone.title()}")
+                            st.caption(f"**Temperature:** {selected_agent.temperature}")
+                            if selected_agent.allowed_tools:
+                                st.caption(f"**Allowed Tools:** {', '.join(selected_agent.allowed_tools)}")
+                            if selected_agent.usage_count:
+                                st.caption(f"**Used:** {selected_agent.usage_count} times")
+                            if selected_agent.rating > 0:
+                                st.caption(f"**Rating:** {'⭐' * int(selected_agent.rating)}")
+                
+                # Button to manage agents (opens agent manager UI)
+                if st.button("✏️ Manage Agents", use_container_width=True):
+                    st.session_state.show_agent_manager = True
+                    st.session_state.show_profile = False
+                    st.session_state.show_file_manager = False
+                    st.session_state.show_diagram_generator = False
+                    st.session_state.show_memory_manager = False
+                    st.rerun()
+            
+            else:
+                st.info("No agents available. Initialize agents first.")
+                
+        except Exception as e:
+            st.error(f"Error loading agents: {e}")
+            st.session_state.selected_agent_id = None
         
         st.divider()
         
@@ -150,6 +285,12 @@ def render_sidebar() -> dict:
             "Enable Data Analyzer",
             value=False,
             help="Analyze CSV/Excel files, create visualizations, get statistics, and generate pandas code"
+        )
+        
+        use_image_generator = st.checkbox(
+            "Enable AI Image Generator",
+            value=False,
+            help="Generate images from text descriptions using DALL-E 3, Stability AI, and other AI models"
         )
         
         st.divider()
@@ -253,6 +394,30 @@ def render_sidebar() -> dict:
             </div>
             """, unsafe_allow_html=True)
     
+    # Get selected agent settings if agent is selected
+    selected_agent_id = st.session_state.get('selected_agent_id', None)
+    agent_settings = {}
+    
+    if selected_agent_id:
+        try:
+            db = get_db()
+            agent_manager = get_agent_manager(db)
+            agent = agent_manager.get_agent_by_id(selected_agent_id)
+            db.close()
+            
+            if agent:
+                agent_settings = {
+                    "agent_id": agent.id,
+                    "agent_name": agent.name,
+                    "agent_emoji": agent.emoji,
+                    "agent_system_prompt": agent.system_prompt,
+                    "agent_temperature": agent.temperature,
+                    "agent_max_tokens": agent.max_tokens,
+                    "agent_allowed_tools": agent.allowed_tools or []
+                }
+        except Exception as e:
+            print(f"Error getting agent settings: {e}")
+    
     return {
         "provider": provider,
         "model": model,
@@ -262,6 +427,8 @@ def render_sidebar() -> dict:
         "use_tavily": use_tavily,
         "use_web_scraper": use_web_scraper,
         "use_youtube": use_youtube,
-        "use_data_analyzer": use_data_analyzer
+        "use_data_analyzer": use_data_analyzer,
+        "use_image_generator": use_image_generator,
+        **agent_settings  # Merge agent settings
     }
 

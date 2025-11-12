@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Conversation for Summarization</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #555;
+            margin-top: 30px;
+        }
+        .metadata {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .summary {
+            background: #e8f5e9;
+            padding: 20px;
+            border-radius: 4px;
+            border-left: 4px solid #4CAF50;
+            margin: 20px 0;
+        }
+        .message {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 4px;
+        }
+        .message.user {
+            background: #e3f2fd;
+            border-left: 4px solid #2196F3;
+        }
+        .message.assistant {
+            background: #f3e5f5;
+            border-left: 4px solid #9C27B0;
+        }
+        .message-header {
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .timestamp {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .action-items, .key-points, .decisions {
+            margin: 15px 0;
+        }
+        .action-items li, .key-points li, .decisions li {
+            margin: 8px 0;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        @media print {
+            body { background: white; }
+            .container { box-shadow: none; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Test Conversation for Summarization</h1>
+
+    <div class="metadata">
+        <strong>Created:</strong> 2025-11-12 19:58:41<br>
+        <strong>Messages:</strong> 8<br>
+    </div>
+
+    <div class="summary">
+        <h2>📋 Executive Summary</h2>
+        <p>Conversation about Hi! I need help understanding how RAG systems work.... (8 messages exchanged covering 2 key topics)</p>
+
+        <h3>Key Points</h3>
+        <ul class="key-points">
+            <li>This is important because it reduces hallucinations and provides source citations</li>
+            <li>**Key point:** RAG combines retrieval and generation</li>
+        </ul>
+
+        <h3>Action Items</h3>
+        <ul class="action-items">
+            <li>☐ I do next to implement this</li>
+            <li>☐ set up a vector database</li>
+            <li>☐ implement chunking strategy</li>
+            <li>☐ create embedding pipeline</li>
+            <li>☐ integrate with LLM</li>
+            <li>☐ use chunking</li>
+        </ul>
+    </div>
+    <h2>💬 Conversation</h2>
+
+    <div class="message user">
+        <div class="message-header">
+            <span>User</span>
+            <span class="timestamp">19:58:41</span>
+        </div>
+        <div class="message-content">Hi! I need help understanding how RAG systems work.</div>
+    </div>
+
+    <div class="message assistant">
+        <div class="message-header">
+            <span>Assistant</span>
+            <span class="timestamp">19:58:41</span>
+        </div>
+        <div class="message-content">Hello! I'd be happy to explain RAG (Retrieval-Augmented Generation) systems. **Key point:** RAG combines retrieval and generation. It works by first retrieving relevant documents, then using them to generate contextual responses. This is important because it reduces hallucinations and provides source citations.</div>
+    </div>
+
+    <div class="message user">
+        <div class="message-header">
+            <span>User</span>
+            <span class="timestamp">19:58:41</span>
+        </div>
+        <div class="message-content">That's interesting. What are the main components?</div>
+    </div>
+
+    <div class="message assistant">
+        <div class="message-header">
+            <span>Assistant</span>
+            <span class="timestamp">19:58:41</span>
+        </div>
+        <div class="message-content">The main components include:<br>1. Document chunking<br>2. Embedding generation<br>3. Vector database for storage<br>4. Semantic search<br>5. Context integration<br><br>We decided to use a hybrid search approach combining semantic and keyword search for better results.</div>
+    </div>
+
+    <div class="message user">
+        <div class="message-header">
+            <span>User</span>
+            <span class="timestamp">19:58:41</span>
+        </div>
+        <div class="message-content">What should I do next to implement this?</div>
+    </div>
+
+    <div class="message assistant">
+        <div class="message-header">
+            <span>Assistant</span>
+            <span class="timestamp">19:58:41</span>
+        </div>
+        <div class="message-content">Here are the action items:<br>- Need to set up a vector database<br>- Should implement chunking strategy<br>- Must create embedding pipeline<br>- Have to integrate with LLM<br><br>Let's start with the chunking strategy first, as that's the foundation.</div>
+    </div>
+
+    <div class="message user">
+        <div class="message-header">
+            <span>User</span>
+            <span class="timestamp">19:58:41</span>
+        </div>
+        <div class="message-content">How do I handle large documents?</div>
+    </div>
+
+    <div class="message assistant">
+        <div class="message-header">
+            <span>Assistant</span>
+            <span class="timestamp">19:58:41</span>
+        </div>
+        <div class="message-content">For large documents, you need to use chunking. The key decision here is: we'll use a chunk size of 1000 tokens with 200 token overlap. This ensures context continuity while keeping chunks manageable.</div>
+    </div>
+
+</div>
+</body>
+</html>

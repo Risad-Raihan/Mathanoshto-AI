@@ -29,48 +29,83 @@ def display_message_with_images(content: str):
         return
     
     # Pattern to match image paths in various formats:
+    # - ![alt text](path/to/image.png)  [MARKDOWN]
     # - sandbox:/path/to/image.png
     # - uploads/visualizations/image.png
     # - [text](sandbox:/path/to/image.png)
     # - Direct paths to images
     
     image_patterns = [
-        r'sandbox:/([\w/\-_.]+\.(?:png|jpg|jpeg|gif|webp))',  # sandbox: prefix
-        r'\((sandbox:/)?(uploads/[\w/\-_.]+\.(?:png|jpg|jpeg|gif|webp))\)',  # markdown links
-        r'(?:^|\s)(uploads/[\w/\-_.]+\.(?:png|jpg|jpeg|gif|webp))(?:\s|$)',  # direct paths
+        # Markdown image syntax: ![alt](path)
+        r'!\[([^\]]*)\]\(([^\)]+\.(?:png|jpg|jpeg|gif|webp|bmp))\)',
+        # sandbox: prefix
+        r'sandbox:/([\w/\-_.]+\.(?:png|jpg|jpeg|gif|webp|bmp))',
+        # Markdown links with sandbox
+        r'\[([^\]]+)\]\(sandbox:/([\w/\-_.]+\.(?:png|jpg|jpeg|gif|webp|bmp))\)',
+        # Markdown links with direct path
+        r'\[([^\]]+)\]\((uploads/[\w/\-_.]+\.(?:png|jpg|jpeg|gif|webp|bmp))\)',
+        # Direct paths
+        r'(?:^|\s)(uploads/[\w/\-_.]+\.(?:png|jpg|jpeg|gif|webp|bmp))(?:\s|$)',
     ]
     
     # Find all image paths in content
     found_images = []
-    for pattern in image_patterns:
+    for pattern_idx, pattern in enumerate(image_patterns):
         matches = re.finditer(pattern, content, re.IGNORECASE)
         for match in matches:
-            # Get the path (might be in different groups depending on pattern)
-            img_path = match.group(1) if match.lastindex >= 1 else match.group(0)
+            # Extract image path based on pattern
+            if pattern_idx == 0:  # Markdown image: ![alt](path)
+                img_path = match.group(2)
+                alt_text = match.group(1)
+            elif pattern_idx == 1:  # sandbox:/path
+                img_path = match.group(1)
+                alt_text = None
+            elif pattern_idx == 2:  # [text](sandbox:/path)
+                img_path = match.group(2)
+                alt_text = match.group(1)
+            elif pattern_idx == 3:  # [text](uploads/path)
+                img_path = match.group(2)
+                alt_text = match.group(1)
+            else:  # Direct path
+                img_path = match.group(1)
+                alt_text = None
+            
             img_path = img_path.strip()
             
             # Clean up the path
             if img_path.startswith('sandbox:/'):
                 img_path = img_path[9:]  # Remove 'sandbox:/'
             
+            # Convert to absolute path if relative
+            if not Path(img_path).is_absolute():
+                # Get project root (four levels up from frontend/streamlit/components/)
+                # chat.py is at: frontend/streamlit/components/chat.py
+                project_root = Path(__file__).parent.parent.parent.parent
+                full_path = (project_root / img_path).resolve()
+            else:
+                full_path = Path(img_path)
+            
             # Check if file exists
-            full_path = Path(img_path)
             if full_path.exists():
-                found_images.append((str(full_path), match.span()))
+                found_images.append((str(full_path), match.span(), alt_text))
     
     # Remove duplicates while preserving order
     unique_images = []
     seen = set()
-    for img, span in found_images:
+    for img, span, alt in found_images:
         if img not in seen:
-            unique_images.append((img, span))
+            unique_images.append((img, span, alt))
             seen.add(img)
     
-    # Display the text content (with image references removed for clarity)
+    # Display the text content (with image markdown removed for clarity)
     display_content = content
     
+    # Remove markdown image syntax
+    display_content = re.sub(r'!\[([^\]]*)\]\(([^\)]+\.(?:png|jpg|jpeg|gif|webp|bmp))\)', '', display_content)
     # Remove sandbox: links from display
     display_content = re.sub(r'\[([^\]]+)\]\(sandbox:/[^\)]+\)', r'\1', display_content)
+    # Remove direct upload path links
+    display_content = re.sub(r'\[([^\]]+)\]\((uploads/[^\)]+\.(?:png|jpg|jpeg|gif|webp|bmp))\)', r'\1', display_content)
     
     # Display the text
     st.markdown(display_content)
@@ -78,11 +113,12 @@ def display_message_with_images(content: str):
     # Display all found images
     if unique_images:
         st.divider()
-        for img_path, _ in unique_images:
+        for img_path, _, alt_text in unique_images:
             # Check if file exists before trying to display
             if Path(img_path).exists():
                 st.image(img_path, width='stretch')
-                st.caption(f"📊 {Path(img_path).name}")
+                caption = alt_text if alt_text else Path(img_path).name
+                st.caption(f"🖼️ {caption}")
             else:
                 st.warning(f"⚠️ Image file not found: {Path(img_path).name}")
 
@@ -151,6 +187,17 @@ def render_chat(settings: dict):
             # Add custom class for cost metric
             cost_label = "💰 Total Cost" if usage['total_cost'] < 0.10 else "⚠️ Total Cost"
             st.metric(cost_label, f"${usage['total_cost']:.4f}", delta=None)
+        
+        # Export buttons
+        export_col1, export_col2, export_col3 = st.columns([4, 1, 1])
+        with export_col1:
+            st.markdown("")  # Spacer
+        with export_col2:
+            if st.button("📥 Export as JSON", use_container_width=True, key="export_json_btn"):
+                _export_conversation_json(st.session_state.current_conversation_id, st.session_state.user_id)
+        with export_col3:
+            if st.button("📄 Export as MD", use_container_width=True, key="export_md_btn"):
+                _export_conversation_markdown(st.session_state.current_conversation_id, st.session_state.user_id)
         
         st.divider()
     
@@ -324,7 +371,8 @@ def render_chat(settings: dict):
                 use_tavily=settings.get("use_tavily", False),
                 use_web_scraper=settings.get("use_web_scraper", False),
                 use_youtube=settings.get("use_youtube", False),
-                use_data_analyzer=settings.get("use_data_analyzer", False)
+                use_data_analyzer=settings.get("use_data_analyzer", False),
+                use_image_generator=settings.get("use_image_generator", False)
             )
             
             if tools:
@@ -337,6 +385,8 @@ def render_chat(settings: dict):
                     enabled_tools.append("YouTube")
                 if settings.get("use_data_analyzer"):
                     enabled_tools.append("Data Analyzer")
+                if settings.get("use_image_generator"):
+                    enabled_tools.append("Image Generator")
                 st.caption(f"🔧 Tools enabled: {', '.join(enabled_tools)}")
             
             thinking_placeholder = st.empty()
@@ -347,14 +397,25 @@ def render_chat(settings: dict):
                 )
             
             try:
+                # Use agent settings if agent selected, otherwise use manual settings
+                agent_id = settings.get("agent_id")
+                if agent_id:
+                    system_prompt = settings.get("agent_system_prompt", "")
+                    temperature = settings.get("agent_temperature", 0.7)
+                    max_tokens = settings.get("agent_max_tokens", 2000)
+                else:
+                    system_prompt = settings.get("system_prompt")
+                    temperature = settings.get("temperature", 0.7)
+                    max_tokens = settings.get("max_tokens", 2000)
+                
                 response = asyncio.run(
                     st.session_state.chat_manager.send_message(
                         user_message=prompt,
                         provider=settings["provider"],
                         model=settings["model"],
-                        temperature=settings["temperature"],
-                        max_tokens=settings["max_tokens"],
-                        system_prompt=settings.get("system_prompt"),
+                        temperature=temperature,
+                        max_tokens=max_tokens,
+                        system_prompt=system_prompt,
                         tools=tools if tools else None,
                         stream=False
                     )
@@ -388,14 +449,84 @@ def render_chat(settings: dict):
         
         st.rerun()
     
-    # File attachment section (before chat input)
+    # File and Image attachment section (before chat input)
     st.divider()
+    
+    # Initialize attached images state
+    if 'attached_images' not in st.session_state:
+        st.session_state.attached_images = []
     
     # Show helpful tip if user has files but nothing attached
     user_files = file_manager.list_files(user_id, limit=100)
     
-    if user_files and not st.session_state.attached_files:
-        st.info("💡 **Tip:** Attach files below to have the AI read and analyze them in your conversation!")
+    if user_files and not st.session_state.attached_files and not st.session_state.attached_images:
+        st.info("💡 **Tip:** Attach files or images below to have the AI analyze them in your conversation!")
+    
+    # Image upload section
+    st.markdown("### 🖼️ Image Attachments")
+    
+    img_col1, img_col2, img_col3 = st.columns([2, 2, 1])
+    
+    with img_col1:
+        # Multiple image upload
+        uploaded_images = st.file_uploader(
+            "Upload images",
+            type=['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'],
+            accept_multiple_files=True,
+            key="image_uploader",
+            help="Upload one or more images for the AI to analyze"
+        )
+        
+        if uploaded_images:
+            from backend.core.image_handler import image_handler
+            for uploaded_file in uploaded_images:
+                # Check if already attached
+                if uploaded_file.name not in [img.get('original_filename') for img in st.session_state.attached_images]:
+                    # Save uploaded image
+                    file_data = uploaded_file.read()
+                    result = image_handler.save_uploaded_image(
+                        file_data,
+                        uploaded_file.name,
+                        user_id,
+                        metadata={'source': 'upload', 'conversation_id': st.session_state.current_conversation_id}
+                    )
+                    
+                    if result['success']:
+                        st.session_state.attached_images.append(result)
+                        show_toast(f"✅ Image attached: {uploaded_file.name}", "success")
+                    else:
+                        st.error(f"❌ Failed to attach {uploaded_file.name}: {result['error']}")
+    
+    with img_col2:
+        # Clipboard paste option (instructions)
+        st.markdown("""
+        **📋 Paste from Clipboard:**
+        
+        Use Ctrl+V (Cmd+V on Mac) in the chat input below to paste images directly!
+        """)
+    
+    with img_col3:
+        if st.button("🗑️ Clear Images", help="Remove all attached images", use_container_width=True):
+            st.session_state.attached_images = []
+            show_toast("Cleared image attachments", "info")
+            st.rerun()
+    
+    # Display attached images
+    if st.session_state.attached_images:
+        st.success(f"🖼️ **AI will analyze {len(st.session_state.attached_images)} image(s) in your next message**")
+        
+        # Show image previews
+        img_preview_cols = st.columns(min(len(st.session_state.attached_images), 4))
+        for idx, img_info in enumerate(st.session_state.attached_images):
+            with img_preview_cols[idx % 4]:
+                st.image(img_info['file_path'], caption=img_info.get('original_filename', img_info['filename']), width=150)
+                size_mb = img_info['size_bytes'] / (1024 * 1024)
+                st.caption(f"{img_info['dimensions'][0]}×{img_info['dimensions'][1]} | {size_mb:.2f} MB")
+                if st.button("✖", key=f"remove_img_{idx}", help="Remove"):
+                    st.session_state.attached_images.pop(idx)
+                    st.rerun()
+    
+    st.divider()
     
     # File selector for mentions
     col_file1, col_file2 = st.columns([3, 1])
@@ -463,9 +594,26 @@ def render_chat(settings: dict):
     
     # Chat input
     if prompt := st.chat_input("What can I help you with?"):
-        # Prepare the message with file context if files are attached
+        # Prepare the message with file and image context if attached
         final_prompt = prompt
         attached_file_names = []
+        attached_image_data = []
+        
+        # Process attached images for vision models
+        if st.session_state.attached_images:
+            from backend.core.image_handler import image_handler as img_handler
+            
+            for img_info in st.session_state.attached_images:
+                # Get base64 encoded image
+                base64_data = img_handler.get_image_base64(img_info['file_path'])
+                if base64_data:
+                    attached_image_data.append({
+                        'type': 'image',
+                        'data': base64_data,
+                        'filename': img_info.get('original_filename', img_info['filename']),
+                        'format': img_info['format'],
+                        'dimensions': img_info['dimensions']
+                    })
         
         if st.session_state.attached_files:
             # Build file context
@@ -525,10 +673,13 @@ def render_chat(settings: dict):
                     context_type='reference'
                 )
         
-        # Add user message to display (show original prompt + file indicators)
+        # Add user message to display (show original prompt + file + image indicators)
         display_content = prompt
         if attached_file_names:
             display_content += f"\n\n📎 **Attached files:** {', '.join(attached_file_names)}"
+        if attached_image_data:
+            image_names = [img['filename'] for img in attached_image_data]
+            display_content += f"\n\n🖼️ **Attached images:** {', '.join(image_names)}"
         
         st.session_state.messages.append({"role": "user", "content": display_content})
         
@@ -543,7 +694,8 @@ def render_chat(settings: dict):
                 use_tavily=settings.get("use_tavily", False),
                 use_web_scraper=settings.get("use_web_scraper", False),
                 use_youtube=settings.get("use_youtube", False),
-                use_data_analyzer=settings.get("use_data_analyzer", False)
+                use_data_analyzer=settings.get("use_data_analyzer", False),
+                use_image_generator=settings.get("use_image_generator", False)
             )
             
             # Show if tools are enabled
@@ -557,6 +709,8 @@ def render_chat(settings: dict):
                     enabled_tools.append("YouTube")
                 if settings.get("use_data_analyzer"):
                     enabled_tools.append("Data Analyzer")
+                if settings.get("use_image_generator"):
+                    enabled_tools.append("Image Generator")
                 st.caption(f"🔧 Tools enabled: {', '.join(enabled_tools)}")
             
             # Show thinking indicator with model name
@@ -568,17 +722,126 @@ def render_chat(settings: dict):
                 )
             
             try:
+                # 🤖 Check if agent is selected and apply agent settings
+                agent_id = settings.get("agent_id")
+                agent_name = settings.get("agent_name")
+                
+                # Use agent settings if agent selected, otherwise use manual settings
+                if agent_id:
+                    # Agent mode - use agent's system prompt and settings
+                    enhanced_system_prompt = settings.get("agent_system_prompt", "")
+                    temperature = settings.get("agent_temperature", 0.7)
+                    max_tokens = settings.get("agent_max_tokens", 2000)
+                    allowed_tools = settings.get("agent_allowed_tools", [])
+                    
+                    # Filter tools based on agent permissions
+                    if allowed_tools:
+                        # Map tool names to boolean flags
+                        tool_mapping = {
+                            "web_search": "use_tavily",
+                            "tavily_search": "use_tavily",
+                            "web_scraper": "use_web_scraper",
+                            "youtube": "use_youtube",
+                            "youtube_summarizer": "use_youtube",
+                            "data_analyzer": "use_data_analyzer"
+                        }
+                        
+                        # Only enable tools that the agent is allowed to use
+                        for tool, setting_key in tool_mapping.items():
+                            if tool not in allowed_tools:
+                                settings[setting_key] = False
+                        
+                        # Rebuild tools with agent permissions
+                        from backend.tools.tavily_search import get_enabled_tools
+                        tools = get_enabled_tools(
+                            use_tavily=settings.get("use_tavily", False),
+                            use_web_scraper=settings.get("use_web_scraper", False),
+                            use_youtube=settings.get("use_youtube", False),
+                            use_data_analyzer=settings.get("use_data_analyzer", False),
+                            use_image_generator=settings.get("use_image_generator", False)
+                        )
+                    
+                    # Show agent indicator
+                    agent_emoji = settings.get("agent_emoji", "🤖")
+                    st.caption(f"{agent_emoji} **Agent: {agent_name}**")
+                    
+                    # Start agent session for tracking
+                    try:
+                        from backend.database.operations import get_db
+                        from backend.core.agent_manager import get_agent_manager
+                        
+                        db = get_db()
+                        agent_manager = get_agent_manager(db)
+                        
+                        # Start session if not already started for this conversation
+                        if not st.session_state.get('agent_session_id'):
+                            session = agent_manager.start_agent_session(
+                                agent_id=agent_id,
+                                conversation_id=st.session_state.current_conversation_id,
+                                user_id=user_id
+                            )
+                            if session:
+                                st.session_state.agent_session_id = session.id
+                        
+                        db.close()
+                    except Exception as agent_error:
+                        print(f"Agent session error: {agent_error}")
+                
+                else:
+                    # Manual mode - use user-defined settings
+                    enhanced_system_prompt = settings.get("system_prompt") or ""
+                    temperature = settings.get("temperature", 0.7)
+                    max_tokens = settings.get("max_tokens", 2000)
+                
+                # 🧠 Retrieve relevant memories for context
+                try:
+                    from backend.database.operations import get_db
+                    from backend.core.memory_manager import get_memory_manager
+                    
+                    db = get_db()
+                    memory_manager = get_memory_manager(db)
+                    
+                    # Search for relevant memories based on user query
+                    relevant_memories = memory_manager.search_memories(
+                        user_id=user_id,
+                        query=prompt,  # Use original user message for search
+                        limit=5,
+                        min_similarity=0.0  # Lower threshold to catch more memories
+                    )
+                    
+                    # Inject memories into system prompt
+                    if relevant_memories and len(relevant_memories) > 0:
+                        memory_context = "\n\n## 🧠 RELEVANT MEMORIES (Use this context to personalize your responses):\n"
+                        for memory, similarity in relevant_memories:
+                            memory_context += f"- [{memory.memory_type}] {memory.content} (similarity: {similarity:.2f})\n"
+                        
+                        enhanced_system_prompt = (enhanced_system_prompt or "") + memory_context
+                        st.caption(f"🧠 Using {len(relevant_memories)} memories from long-term context")
+                    
+                    db.close()
+                except Exception as mem_error:
+                    # Silently fail if memory system has issues
+                    print(f"Memory retrieval error: {mem_error}")
+                    import traceback
+                    traceback.print_exc()
+                
                 # Run async function (use final_prompt which includes file context)
+                # Pass images if attached
+                extra_kwargs = {}
+                if attached_image_data:
+                    extra_kwargs['images'] = attached_image_data
+                
                 response = asyncio.run(
                     st.session_state.chat_manager.send_message(
                         user_message=final_prompt,  # Use final_prompt with file context
                         provider=settings["provider"],
                         model=settings["model"],
-                        temperature=settings["temperature"],
-                        max_tokens=settings["max_tokens"],
-                        system_prompt=settings.get("system_prompt"),
+                        temperature=temperature,  # Use agent or manual temperature
+                        max_tokens=max_tokens,  # Use agent or manual max_tokens
+                        system_prompt=enhanced_system_prompt,  # Use agent or manual system prompt with memories
                         tools=tools if tools else None,
-                        stream=False
+                        stream=False,
+                        **extra_kwargs
                     )
                 )
                 
@@ -621,9 +884,11 @@ def render_chat(settings: dict):
                         )
                     )
                 
-                # Clear attached files after successful response
+                # Clear attached files and images after successful response
                 if st.session_state.attached_files:
                     st.session_state.attached_files = []
+                if st.session_state.attached_images:
+                    st.session_state.attached_images = []
                 
                 # Show success toast
                 show_toast("Response generated successfully!", "success")
@@ -687,4 +952,87 @@ def render_chat(settings: dict):
                     st.caption("If this error persists, please check the application logs.")
         
         st.rerun()
+
+
+def _export_conversation_json(conversation_id: int, user_id: int):
+    """Export conversation as JSON and trigger download"""
+    try:
+        from backend.core.conversation_exporter import export_conversation
+        from backend.database.operations import ConversationDB
+        from pathlib import Path
+        import json
+        
+        with st.spinner("Exporting as JSON..."):
+            # Get conversation
+            conversation = ConversationDB.get_conversation(conversation_id)
+            
+            # Export
+            filepath = export_conversation(
+                conversation_id=conversation_id,
+                user_id=user_id,
+                export_format='json',
+                include_summary=True,
+                privacy_mode=False
+            )
+            
+            # Read file
+            with open(filepath, 'r', encoding='utf-8') as f:
+                json_content = f.read()
+            
+            # Create download button
+            filename = f"{conversation.title.replace(' ', '_')}.json"
+            
+            st.download_button(
+                label="⬇️ Download JSON",
+                data=json_content,
+                file_name=filename,
+                mime='application/json',
+                use_container_width=True
+            )
+            
+            st.success(f"✅ Exported successfully!")
+            
+    except Exception as e:
+        st.error(f"❌ Export failed: {str(e)}")
+
+
+def _export_conversation_markdown(conversation_id: int, user_id: int):
+    """Export conversation as Markdown and trigger download"""
+    try:
+        from backend.core.conversation_exporter import export_conversation
+        from backend.database.operations import ConversationDB
+        from pathlib import Path
+        
+        with st.spinner("Exporting as Markdown..."):
+            # Get conversation
+            conversation = ConversationDB.get_conversation(conversation_id)
+            
+            # Export
+            filepath = export_conversation(
+                conversation_id=conversation_id,
+                user_id=user_id,
+                export_format='markdown',
+                include_summary=True,
+                privacy_mode=False
+            )
+            
+            # Read file
+            with open(filepath, 'r', encoding='utf-8') as f:
+                md_content = f.read()
+            
+            # Create download button
+            filename = f"{conversation.title.replace(' ', '_')}.md"
+            
+            st.download_button(
+                label="⬇️ Download Markdown",
+                data=md_content,
+                file_name=filename,
+                mime='text/markdown',
+                use_container_width=True
+            )
+            
+            st.success(f"✅ Exported successfully!")
+            
+    except Exception as e:
+        st.error(f"❌ Export failed: {str(e)}")
 

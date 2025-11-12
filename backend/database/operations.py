@@ -9,6 +9,30 @@ from datetime import datetime
 from backend.database.models import Base, Conversation, Message, Attachment, ToolCall
 from backend.config.settings import settings
 
+# Import all models to ensure they're registered with SQLAlchemy
+try:
+    from backend.database.memory_models import Memory, MemoryVersion, MemoryRelationship, MemoryAccess
+except ImportError:
+    pass  # Memory system may not be set up yet
+
+try:
+    from backend.database.agent_models import Agent, AgentVersion, AgentSession
+except ImportError:
+    pass  # Agent system may not be set up yet
+
+try:
+    from backend.database.rag_models import DocumentChunk, ChunkCitation, RAGConfiguration, RAGMetrics
+except ImportError:
+    pass  # RAG system may not be set up yet
+
+try:
+    from backend.database.conversation_insights_models import (
+        ConversationSummary, ConversationInsight, ConversationSuggestion,
+        ConversationExport, UserPromptLibrary
+    )
+except ImportError:
+    pass  # Insights system may not be set up yet
+
 # Create engine and session
 engine = create_engine(settings.database_url, echo=False)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

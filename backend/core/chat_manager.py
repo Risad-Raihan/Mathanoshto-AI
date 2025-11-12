@@ -60,6 +60,7 @@ class ChatManager:
         stream: bool = False,
         system_prompt: Optional[str] = None,
         tools: Optional[List[Dict]] = None,
+        images: Optional[List[Dict]] = None,
         **kwargs
     ) -> CompletionResponse | AsyncIterator[str]:
         """
@@ -73,6 +74,8 @@ class ChatManager:
             max_tokens: Max tokens to generate
             stream: Whether to stream response
             system_prompt: Optional system prompt
+            tools: Optional tool definitions
+            images: Optional list of image data dicts (with 'data' as base64)
             **kwargs: Additional provider-specific args
             
         Returns:
@@ -96,6 +99,61 @@ class ChatManager:
         # Add system prompt if provided
         if system_prompt:
             messages.insert(0, {"role": "system", "content": system_prompt})
+        
+        # Handle images if provided (for vision models)
+        if images and len(images) > 0:
+            # Check if model supports vision
+            model_info = llm_provider.get_model_info(model)
+            if model_info and model_info.supports_vision:
+                # Replace the last user message with multimodal content
+                # Find the last user message
+                for i in range(len(messages) - 1, -1, -1):
+                    if messages[i]["role"] == "user":
+                        # Format message with images
+                        if provider.lower() == "openai":
+                            # OpenAI format
+                            content_parts = [
+                                {"type": "text", "text": messages[i]["content"]}
+                            ]
+                            
+                            for img in images:
+                                # Assume image data is already base64 encoded
+                                img_format = img.get('format', 'png').lower()
+                                mime_type = f"image/{img_format}"
+                                data_url = f"data:{mime_type};base64,{img['data']}"
+                                
+                                content_parts.append({
+                                    "type": "image_url",
+                                    "image_url": {
+                                        "url": data_url,
+                                        "detail": "auto"  # or "low", "high"
+                                    }
+                                })
+                            
+                            messages[i]["content"] = content_parts
+                        
+                        elif provider.lower() == "gemini":
+                            # Gemini format (similar but slightly different)
+                            content_parts = [messages[i]["content"]]
+                            
+                            for img in images:
+                                import base64
+                                # Gemini expects parts with inline_data
+                                content_parts.append({
+                                    "inline_data": {
+                                        "mime_type": f"image/{img.get('format', 'png').lower()}",
+                                        "data": img['data']
+                                    }
+                                })
+                            
+                            messages[i]["parts"] = content_parts
+                        
+                        break
+            else:
+                # Model doesn't support vision, add image info to text
+                image_info_text = "\n\n[Note: User attached images but this model doesn't support vision. "
+                image_info_text += f"Attached: {', '.join([img.get('filename', 'image') for img in images])}]"
+                messages[-1]["content"] += image_info_text
         
         # Get LLM response
         if stream:
@@ -155,6 +213,9 @@ class ChatManager:
                     elif function_name in ["analyze_dataset", "create_visualization", "generate_pandas_code"]:
                         from backend.tools.data_analyzer_integration import execute_data_analyzer_tool
                         result = execute_data_analyzer_tool(function_name, function_args)
+                    elif function_name == "generate_image":
+                        from backend.tools.image_generator import execute_image_generation_tool
+                        result = execute_image_generation_tool(function_name, function_args)
                     
                     if result:
                         tool_results.append({
@@ -194,6 +255,11 @@ class ChatManager:
                         **kwargs_without_tools
                     )
                     print(f"✅ Got final response (has tool_calls: {bool(response.tool_calls)})")
+                    
+                    # Prepend tool results to the response content so images are displayed
+                    tool_results_content = "\n\n".join([tr['content'] for tr in tool_results])
+                    response.content = f"{tool_results_content}\n\n---\n\n{response.content}"
+                    print(f"📝 Combined tool results with LLM response for display")
             
             # Save assistant response to database
             MessageDB.add_message(

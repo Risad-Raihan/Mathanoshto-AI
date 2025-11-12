@@ -35,6 +35,8 @@ class User(Base):
     # Relationships
     conversations = relationship("Conversation", back_populates="user", cascade="all, delete-orphan")
     api_keys = relationship("UserAPIKey", back_populates="user", cascade="all, delete-orphan")
+    memories = relationship("Memory", back_populates="user", cascade="all, delete-orphan")
+    custom_agents = relationship("Agent", back_populates="creator", cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<User(id={self.id}, username='{self.username}', full_name='{self.full_name}')>"
@@ -79,6 +81,7 @@ class Conversation(Base):
     # Relationships
     user = relationship("User", back_populates="conversations")
     messages = relationship("Message", back_populates="conversation", cascade="all, delete-orphan")
+    agent_sessions = relationship("AgentSession", back_populates="conversation", cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<Conversation(id={self.id}, title='{self.title}')>"
