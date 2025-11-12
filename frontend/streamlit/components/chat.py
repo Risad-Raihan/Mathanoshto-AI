@@ -347,14 +347,25 @@ def render_chat(settings: dict):
                 )
             
             try:
+                # Use agent settings if agent selected, otherwise use manual settings
+                agent_id = settings.get("agent_id")
+                if agent_id:
+                    system_prompt = settings.get("agent_system_prompt", "")
+                    temperature = settings.get("agent_temperature", 0.7)
+                    max_tokens = settings.get("agent_max_tokens", 2000)
+                else:
+                    system_prompt = settings.get("system_prompt")
+                    temperature = settings.get("temperature", 0.7)
+                    max_tokens = settings.get("max_tokens", 2000)
+                
                 response = asyncio.run(
                     st.session_state.chat_manager.send_message(
                         user_message=prompt,
                         provider=settings["provider"],
                         model=settings["model"],
-                        temperature=settings["temperature"],
-                        max_tokens=settings["max_tokens"],
-                        system_prompt=settings.get("system_prompt"),
+                        temperature=temperature,
+                        max_tokens=max_tokens,
+                        system_prompt=system_prompt,
                         tools=tools if tools else None,
                         stream=False
                     )
@@ -568,9 +579,77 @@ def render_chat(settings: dict):
                 )
             
             try:
-                # 🧠 Retrieve relevant memories for context
-                enhanced_system_prompt = settings.get("system_prompt") or ""  # Handle None
+                # 🤖 Check if agent is selected and apply agent settings
+                agent_id = settings.get("agent_id")
+                agent_name = settings.get("agent_name")
                 
+                # Use agent settings if agent selected, otherwise use manual settings
+                if agent_id:
+                    # Agent mode - use agent's system prompt and settings
+                    enhanced_system_prompt = settings.get("agent_system_prompt", "")
+                    temperature = settings.get("agent_temperature", 0.7)
+                    max_tokens = settings.get("agent_max_tokens", 2000)
+                    allowed_tools = settings.get("agent_allowed_tools", [])
+                    
+                    # Filter tools based on agent permissions
+                    if allowed_tools:
+                        # Map tool names to boolean flags
+                        tool_mapping = {
+                            "web_search": "use_tavily",
+                            "tavily_search": "use_tavily",
+                            "web_scraper": "use_web_scraper",
+                            "youtube": "use_youtube",
+                            "youtube_summarizer": "use_youtube",
+                            "data_analyzer": "use_data_analyzer"
+                        }
+                        
+                        # Only enable tools that the agent is allowed to use
+                        for tool, setting_key in tool_mapping.items():
+                            if tool not in allowed_tools:
+                                settings[setting_key] = False
+                        
+                        # Rebuild tools with agent permissions
+                        from backend.tools.tavily_search import get_enabled_tools
+                        tools = get_enabled_tools(
+                            use_tavily=settings.get("use_tavily", False),
+                            use_web_scraper=settings.get("use_web_scraper", False),
+                            use_youtube=settings.get("use_youtube", False),
+                            use_data_analyzer=settings.get("use_data_analyzer", False)
+                        )
+                    
+                    # Show agent indicator
+                    agent_emoji = settings.get("agent_emoji", "🤖")
+                    st.caption(f"{agent_emoji} **Agent: {agent_name}**")
+                    
+                    # Start agent session for tracking
+                    try:
+                        from backend.database.operations import get_db
+                        from backend.core.agent_manager import get_agent_manager
+                        
+                        db = get_db()
+                        agent_manager = get_agent_manager(db)
+                        
+                        # Start session if not already started for this conversation
+                        if not st.session_state.get('agent_session_id'):
+                            session = agent_manager.start_agent_session(
+                                agent_id=agent_id,
+                                conversation_id=st.session_state.current_conversation_id,
+                                user_id=user_id
+                            )
+                            if session:
+                                st.session_state.agent_session_id = session.id
+                        
+                        db.close()
+                    except Exception as agent_error:
+                        print(f"Agent session error: {agent_error}")
+                
+                else:
+                    # Manual mode - use user-defined settings
+                    enhanced_system_prompt = settings.get("system_prompt") or ""
+                    temperature = settings.get("temperature", 0.7)
+                    max_tokens = settings.get("max_tokens", 2000)
+                
+                # 🧠 Retrieve relevant memories for context
                 try:
                     from backend.database.operations import get_db
                     from backend.core.memory_manager import get_memory_manager
@@ -608,9 +687,9 @@ def render_chat(settings: dict):
                         user_message=final_prompt,  # Use final_prompt with file context
                         provider=settings["provider"],
                         model=settings["model"],
-                        temperature=settings["temperature"],
-                        max_tokens=settings["max_tokens"],
-                        system_prompt=enhanced_system_prompt,  # Use enhanced prompt with memories
+                        temperature=temperature,  # Use agent or manual temperature
+                        max_tokens=max_tokens,  # Use agent or manual max_tokens
+                        system_prompt=enhanced_system_prompt,  # Use agent or manual system prompt with memories
                         tools=tools if tools else None,
                         stream=False
                     )
