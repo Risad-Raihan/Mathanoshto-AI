@@ -34,6 +34,7 @@ from frontend.streamlit.components.login import require_login
 from frontend.streamlit.components.profile import render_user_profile
 from frontend.streamlit.components.file_manager import render_file_manager
 from frontend.streamlit.components.diagram_generator import render_diagram_generator
+from frontend.streamlit.components.memory_manager import render_memory_manager
 from frontend.streamlit.styles.custom_css import get_custom_css
 
 # Load and encode background image
@@ -94,6 +95,13 @@ elif st.session_state.get('show_diagram_generator', False):
     # Add close button
     if st.button("← Back to Chat", key="close_diagram_generator"):
         st.session_state.show_diagram_generator = False
+        st.rerun()
+elif st.session_state.get('show_memory_manager', False):
+    render_memory_manager()
+    
+    # Add close button
+    if st.button("← Back to Chat", key="close_memory_manager"):
+        st.session_state.show_memory_manager = False
         st.rerun()
 else:
     # Render main chat interface

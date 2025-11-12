@@ -568,6 +568,40 @@ def render_chat(settings: dict):
                 )
             
             try:
+                # 🧠 Retrieve relevant memories for context
+                enhanced_system_prompt = settings.get("system_prompt") or ""  # Handle None
+                
+                try:
+                    from backend.database.operations import get_db
+                    from backend.core.memory_manager import get_memory_manager
+                    
+                    db = get_db()
+                    memory_manager = get_memory_manager(db)
+                    
+                    # Search for relevant memories based on user query
+                    relevant_memories = memory_manager.search_memories(
+                        user_id=user_id,
+                        query=prompt,  # Use original user message for search
+                        limit=5,
+                        min_similarity=0.0  # Lower threshold to catch more memories
+                    )
+                    
+                    # Inject memories into system prompt
+                    if relevant_memories and len(relevant_memories) > 0:
+                        memory_context = "\n\n## 🧠 RELEVANT MEMORIES (Use this context to personalize your responses):\n"
+                        for memory, similarity in relevant_memories:
+                            memory_context += f"- [{memory.memory_type}] {memory.content} (similarity: {similarity:.2f})\n"
+                        
+                        enhanced_system_prompt = (enhanced_system_prompt or "") + memory_context
+                        st.caption(f"🧠 Using {len(relevant_memories)} memories from long-term context")
+                    
+                    db.close()
+                except Exception as mem_error:
+                    # Silently fail if memory system has issues
+                    print(f"Memory retrieval error: {mem_error}")
+                    import traceback
+                    traceback.print_exc()
+                
                 # Run async function (use final_prompt which includes file context)
                 response = asyncio.run(
                     st.session_state.chat_manager.send_message(
@@ -576,7 +610,7 @@ def render_chat(settings: dict):
                         model=settings["model"],
                         temperature=settings["temperature"],
                         max_tokens=settings["max_tokens"],
-                        system_prompt=settings.get("system_prompt"),
+                        system_prompt=enhanced_system_prompt,  # Use enhanced prompt with memories
                         tools=tools if tools else None,
                         stream=False
                     )

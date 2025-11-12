@@ -35,6 +35,7 @@ class User(Base):
     # Relationships
     conversations = relationship("Conversation", back_populates="user", cascade="all, delete-orphan")
     api_keys = relationship("UserAPIKey", back_populates="user", cascade="all, delete-orphan")
+    memories = relationship("Memory", back_populates="user", cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<User(id={self.id}, username='{self.username}', full_name='{self.full_name}')>"

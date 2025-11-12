@@ -17,6 +17,12 @@ cryptography>=41.0.0
 # Database
 SQLAlchemy>=2.0.0
 
+# Memory System & Embeddings
+chromadb>=0.4.0  # Vector database
+sentence-transformers>=2.2.0  # Local embeddings
+torch>=2.0.0  # Required for sentence-transformers
+numpy>=1.24.0  # Already included but ensure version
+
 # File Handling
 Pillow>=10.0.0
 PyPDF2>=3.0.0
@@ -42,7 +48,7 @@ requests>=2.31.0
 playwright>=1.40.0  # JavaScript rendering
 readability-lxml>=0.8.1  # Smart content extraction
 html2text>=2020.1.16  # HTML to markdown
-reppy>=0.4.14  # robots.txt parser
+# reppy>=0.4.14  # robots.txt parser (optional, has C++ compilation issues on some systems)
 urllib3>=2.0.0  # URL handling
 lxml>=4.9.0  # Fast HTML parsing
 firecrawl-py>=0.0.1  # Firecrawl API (optional)
