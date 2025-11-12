@@ -1,0 +1,121 @@
+{
+  "conversation": {
+    "id": 37,
+    "title": "Test Conversation for Summarization",
+    "created_at": "2025-11-12T19:58:41.873887",
+    "updated_at": "2025-11-12T19:58:41.955602"
+  },
+  "summary": {
+    "short": "Conversation about Hi! I need help understanding how RAG systems work.... (8 messages exchanged covering 2 key topics)",
+    "medium": "This conversation discusses Hi! I need help understanding how RAG systems work..... Main topics covered include: This is important because it reduces hallucinations and provides source citations, **Key point:** RAG combines retrieval and generation. Key decisions: to use a hybrid search approach combining semantic and keyword search for better results. The conversation consisted of 4 user messages and 4 assistant responses.",
+    "detailed": "**Overview:**\nHi! I need help understanding how RAG systems work....\n\n**Key Points:**\n- This is important because it reduces hallucinations and provides source citations\n- **Key point:** RAG combines retrieval and generation\n\n**Decisions Made:**\n- to use a hybrid search approach combining semantic and keyword search for better results\n- start with the chunking strategy first, as that's the foundation\n- here is: we'll use a chunk size of 1000 tokens with 200 token overlap\n- use a chunk size of 1000 tokens with 200 token overlap\n\n**Action Items:**\n- I do next to implement this\n- set up a vector database\n- implement chunking strategy\n- create embedding pipeline\n- integrate with LLM\n- use chunking\n\n**Questions Addressed:**\n- What are the main components?\n- What should I do next to implement this?\n- How do I handle large documents?\n\n\n**Statistics:**\n- Total messages: 8\n- User messages: 4\n- Assistant responses: 4\n- Total characters: 1,164",
+    "key_points": [
+      "This is important because it reduces hallucinations and provides source citations",
+      "**Key point:** RAG combines retrieval and generation"
+    ],
+    "decisions": [
+      "to use a hybrid search approach combining semantic and keyword search for better results",
+      "start with the chunking strategy first, as that's the foundation",
+      "here is: we'll use a chunk size of 1000 tokens with 200 token overlap",
+      "use a chunk size of 1000 tokens with 200 token overlap"
+    ],
+    "action_items": [
+      "I do next to implement this",
+      "set up a vector database",
+      "implement chunking strategy",
+      "create embedding pipeline",
+      "integrate with LLM",
+      "use chunking"
+    ]
+  },
+  "messages": [
+    {
+      "id": 61,
+      "role": "user",
+      "content": "Hi! I need help understanding how RAG systems work.",
+      "timestamp": "2025-11-12T19:58:41.892143",
+      "metadata": {
+        "model": null,
+        "provider": null,
+        "tokens": 0
+      }
+    },
+    {
+      "id": 62,
+      "role": "assistant",
+      "content": "Hello! I'd be happy to explain RAG (Retrieval-Augmented Generation) systems. **Key point:** RAG combines retrieval and generation. It works by first retrieving relevant documents, then using them to generate contextual responses. This is important because it reduces hallucinations and provides source citations.",
+      "timestamp": "2025-11-12T19:58:41.902143",
+      "metadata": {
+        "model": null,
+        "provider": null,
+        "tokens": 0
+      }
+    },
+    {
+      "id": 63,
+      "role": "user",
+      "content": "That's interesting. What are the main components?",
+      "timestamp": "2025-11-12T19:58:41.913644",
+      "metadata": {
+        "model": null,
+        "provider": null,
+        "tokens": 0
+      }
+    },
+    {
+      "id": 64,
+      "role": "assistant",
+      "content": "The main components include:\n1. Document chunking\n2. Embedding generation\n3. Vector database for storage\n4. Semantic search\n5. Context integration\n\nWe decided to use a hybrid search approach combining semantic and keyword search for better results.",
+      "timestamp": "2025-11-12T19:58:41.922295",
+      "metadata": {
+        "model": null,
+        "provider": null,
+        "tokens": 0
+      }
+    },
+    {
+      "id": 65,
+      "role": "user",
+      "content": "What should I do next to implement this?",
+      "timestamp": "2025-11-12T19:58:41.930888",
+      "metadata": {
+        "model": null,
+        "provider": null,
+        "tokens": 0
+      }
+    },
+    {
+      "id": 66,
+      "role": "assistant",
+      "content": "Here are the action items:\n- Need to set up a vector database\n- Should implement chunking strategy\n- Must create embedding pipeline\n- Have to integrate with LLM\n\nLet's start with the chunking strategy first, as that's the foundation.",
+      "timestamp": "2025-11-12T19:58:41.939355",
+      "metadata": {
+        "model": null,
+        "provider": null,
+        "tokens": 0
+      }
+    },
+    {
+      "id": 67,
+      "role": "user",
+      "content": "How do I handle large documents?",
+      "timestamp": "2025-11-12T19:58:41.948007",
+      "metadata": {
+        "model": null,
+        "provider": null,
+        "tokens": 0
+      }
+    },
+    {
+      "id": 68,
+      "role": "assistant",
+      "content": "For large documents, you need to use chunking. The key decision here is: we'll use a chunk size of 1000 tokens with 200 token overlap. This ensures context continuity while keeping chunks manageable.",
+      "timestamp": "2025-11-12T19:58:41.956156",
+      "metadata": {
+        "model": null,
+        "provider": null,
+        "tokens": 0
+      }
+    }
+  ]
+}
