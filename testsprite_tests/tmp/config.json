@@ -2,5 +2,15 @@
   "status": "commited",
   "type": "frontend",
   "scope": "codebase",
-  "localEndpoint": "http://localhost:8501"
+  "localEndpoint": "http://localhost:8501",
+  "executionArgs": {
+    "projectName": "tavily_search_wraper",
+    "projectPath": "/home/risad/projects/tavily_search_wraper",
+    "testIds": [],
+    "additionalInstruction": "",
+    "envs": {
+      "API_KEY": "sk-user-7buipoiWqUotqDeMRlcpEXX8lYR6MLokJvrX-J_XRi6MVRitwTXdliruHV7688j63ml5rb79cpv6R_hQOxM4iz-aF5LMQbzUVwghqJZZWMCiMYP5LpVJ2p6_jcGj-xvF9J0"
+    }
+  },
+  "proxy": "http://57aba55d-8170-4644-8fe3-e113609ec51d:dXz8kClLdJpz8td4uMBMH60w4iuAHD3l@tun.testsprite.com:8080"
 }
