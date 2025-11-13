@@ -501,11 +501,22 @@ def render_chat(settings: dict):
                         st.error(f"❌ Failed to attach {uploaded_file.name}: {result['error']}")
     
     with img_col2:
-        # Clipboard paste option (instructions)
+        # Alternative: Drag and Drop instructions (more reliable than clipboard)
         st.markdown("""
-        **📋 Paste from Clipboard:**
+        **📋 Quick Upload:**
         
-        Use Ctrl+V (Cmd+V on Mac) in the chat input below to paste images directly!
+        - Drag & drop images to file picker →
+        - Or use keyboard shortcut ⌨️
+        - **Tip:** Save clipboard images first, then upload
+        """)
+        
+        st.info("""
+        💡 **Clipboard Workaround:**  
+        1. Copy image to clipboard (Ctrl+C)  
+        2. Paste to desktop/folder (Ctrl+V)  
+        3. Drag file to uploader above ← 
+        
+        *Full clipboard paste requires browser extension*
         """)
     
     with img_col3:

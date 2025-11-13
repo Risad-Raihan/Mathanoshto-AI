@@ -50,25 +50,25 @@ class RAGProcessor:
         ).first()
         
         if not config:
-            # Create default config
+            # Create default config with optimized parameters for >=85% accuracy
             config = RAGConfiguration(
                 user_id=self.user_id,
                 is_enabled=True,
-                chunk_size=1000,
-                chunk_overlap=200,
+                chunk_size=1500,  # Increased from 1000 for better context
+                chunk_overlap=300,  # Increased from 200 for better continuity
                 chunking_strategy="recursive",
-                top_k=5,
-                min_similarity=0.5,
+                top_k=7,  # Increased from 5 for more candidates
+                min_similarity=0.4,  # Lowered from 0.5 to catch more relevant chunks
                 retrieval_mode="hybrid",
-                semantic_weight=0.7,
-                keyword_weight=0.3,
+                semantic_weight=0.8,  # Increased from 0.7 for better semantic matching
+                keyword_weight=0.2,  # Adjusted from 0.3
                 use_reranking=True,
                 show_citations=True,
                 citation_format="inline",
                 use_compression=False,
                 use_query_expansion=False,
                 use_mmr=True,
-                mmr_lambda=0.5
+                mmr_lambda=0.7  # Increased from 0.5 to prioritize relevance over diversity
             )
             self.db.add(config)
             self.db.commit()

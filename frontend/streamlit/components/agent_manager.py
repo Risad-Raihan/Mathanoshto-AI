@@ -147,7 +147,8 @@ class AgentManagerUI:
                 name = st.text_input(
                     "Agent Name *",
                     placeholder="e.g., Django Expert, Bug Hunter, Documentation Writer",
-                    help="Give your agent a descriptive name"
+                    help="Give your agent a descriptive name",
+                    key="agent_name_input"
                 )
             
             with col2:
@@ -155,21 +156,24 @@ class AgentManagerUI:
                     "Emoji",
                     value="🤖",
                     max_chars=2,
-                    help="Choose an emoji for your agent"
+                    help="Choose an emoji for your agent",
+                    key="agent_emoji_input"
                 )
             
             description = st.text_area(
                 "Description *",
                 placeholder="What does this agent do? What is it specialized in?",
                 help="Describe your agent's purpose and specialization",
-                height=100
+                height=100,
+                key="agent_description_input"
             )
             
             system_prompt = st.text_area(
                 "System Prompt *",
                 placeholder="You are an expert in...\n\nYour role is to...\n\nWhen responding:\n1. ...\n2. ...",
                 help="This defines your agent's personality, expertise, and behavior",
-                height=300
+                height=300,
+                key="agent_system_prompt_input"
             )
             
             # Settings
@@ -182,14 +186,16 @@ class AgentManagerUI:
                 category = st.selectbox(
                     "Category",
                     ["custom", "research", "development", "product", "data", "documentation"],
-                    help="Categorize your agent"
+                    help="Categorize your agent",
+                    key="agent_category_select"
                 )
             
             with col2:
                 tone = st.selectbox(
                     "Tone",
                     ["professional", "casual", "technical", "creative", "friendly", "analytical"],
-                    help="Agent's communication style"
+                    help="Agent's communication style",
+                    key="agent_tone_select"
                 )
             
             with col3:
@@ -197,7 +203,8 @@ class AgentManagerUI:
                     "Expertise Level",
                     ["beginner", "intermediate", "expert"],
                     index=2,
-                    help="Agent's knowledge depth"
+                    help="Agent's knowledge depth",
+                    key="agent_expertise_select"
                 )
             
             col1, col2 = st.columns(2)
@@ -209,7 +216,8 @@ class AgentManagerUI:
                     max_value=2.0,
                     value=0.7,
                     step=0.1,
-                    help="Higher = more creative, Lower = more focused"
+                    help="Higher = more creative, Lower = more focused",
+                    key="agent_temperature_slider"
                 )
             
             with col2:
@@ -219,7 +227,8 @@ class AgentManagerUI:
                     max_value=8000,
                     value=2000,
                     step=100,
-                    help="Maximum response length"
+                    help="Maximum response length",
+                    key="agent_max_tokens_input"
                 )
             
             # Tool permissions
@@ -230,23 +239,24 @@ class AgentManagerUI:
             col1, col2, col3, col4 = st.columns(4)
             
             with col1:
-                allow_web_search = st.checkbox("Web Search", value=True)
+                allow_web_search = st.checkbox("Web Search", value=True, key="agent_tool_web_search")
             with col2:
-                allow_web_scraper = st.checkbox("Web Scraper", value=True)
+                allow_web_scraper = st.checkbox("Web Scraper", value=True, key="agent_tool_web_scraper")
             with col3:
-                allow_youtube = st.checkbox("YouTube", value=True)
+                allow_youtube = st.checkbox("YouTube", value=True, key="agent_tool_youtube")
             with col4:
-                allow_data_analyzer = st.checkbox("Data Analyzer", value=True)
+                allow_data_analyzer = st.checkbox("Data Analyzer", value=True, key="agent_tool_data_analyzer")
             
             # Tags
             tags_input = st.text_input(
                 "Tags (comma-separated)",
                 placeholder="python, debugging, backend, api",
-                help="Add tags for easier searching"
+                help="Add tags for easier searching",
+                key="agent_tags_input"
             )
             
             # Submit button
-            submitted = st.form_submit_button("✨ Create Agent", use_container_width=True)
+            submitted = st.form_submit_button("✨ Create Agent", use_container_width=True, type="primary")
             
             if submitted:
                 # Validation
@@ -320,7 +330,8 @@ class AgentManagerUI:
         selected_agent_name = st.selectbox(
             "Select Agent to Edit",
             list(agent_options.keys()),
-            index=default_index
+            index=default_index,
+            key="edit_agent_selector"
         )
         
         selected_agent_id = agent_options[selected_agent_name]
@@ -337,26 +348,30 @@ class AgentManagerUI:
             with col1:
                 name = st.text_input(
                     "Agent Name *",
-                    value=agent.name
+                    value=agent.name,
+                    key="edit_agent_name_input"
                 )
             
             with col2:
                 emoji = st.text_input(
                     "Emoji",
                     value=agent.emoji,
-                    max_chars=2
+                    max_chars=2,
+                    key="edit_agent_emoji_input"
                 )
             
             description = st.text_area(
                 "Description *",
                 value=agent.description,
-                height=100
+                height=100,
+                key="edit_agent_description_input"
             )
             
             system_prompt = st.text_area(
                 "System Prompt *",
                 value=agent.system_prompt,
-                height=300
+                height=300,
+                key="edit_agent_system_prompt_input"
             )
             
             # Settings
@@ -369,21 +384,24 @@ class AgentManagerUI:
                 category = st.selectbox(
                     "Category",
                     ["custom", "research", "development", "product", "data", "documentation"],
-                    index=["custom", "research", "development", "product", "data", "documentation"].index(agent.category)
+                    index=["custom", "research", "development", "product", "data", "documentation"].index(agent.category),
+                    key="edit_agent_category_select"
                 )
             
             with col2:
                 tone = st.selectbox(
                     "Tone",
                     ["professional", "casual", "technical", "creative", "friendly", "analytical"],
-                    index=["professional", "casual", "technical", "creative", "friendly", "analytical"].index(agent.tone) if agent.tone in ["professional", "casual", "technical", "creative", "friendly", "analytical"] else 0
+                    index=["professional", "casual", "technical", "creative", "friendly", "analytical"].index(agent.tone) if agent.tone in ["professional", "casual", "technical", "creative", "friendly", "analytical"] else 0,
+                    key="edit_agent_tone_select"
                 )
             
             with col3:
                 expertise = st.selectbox(
                     "Expertise Level",
                     ["beginner", "intermediate", "expert"],
-                    index=["beginner", "intermediate", "expert"].index(agent.expertise_level) if agent.expertise_level in ["beginner", "intermediate", "expert"] else 2
+                    index=["beginner", "intermediate", "expert"].index(agent.expertise_level) if agent.expertise_level in ["beginner", "intermediate", "expert"] else 2,
+                    key="edit_agent_expertise_select"
                 )
             
             col1, col2 = st.columns(2)
@@ -394,7 +412,8 @@ class AgentManagerUI:
                     min_value=0.0,
                     max_value=2.0,
                     value=float(agent.temperature),
-                    step=0.1
+                    step=0.1,
+                    key="edit_agent_temperature_slider"
                 )
             
             with col2:
@@ -403,7 +422,8 @@ class AgentManagerUI:
                     min_value=100,
                     max_value=8000,
                     value=agent.max_tokens,
-                    step=100
+                    step=100,
+                    key="edit_agent_max_tokens_input"
                 )
             
             # Tool permissions
@@ -415,24 +435,26 @@ class AgentManagerUI:
             col1, col2, col3, col4 = st.columns(4)
             
             with col1:
-                allow_web_search = st.checkbox("Web Search", value="web_search" in current_tools or "tavily_search" in current_tools)
+                allow_web_search = st.checkbox("Web Search", value="web_search" in current_tools or "tavily_search" in current_tools, key="edit_agent_tool_web_search")
             with col2:
-                allow_web_scraper = st.checkbox("Web Scraper", value="web_scraper" in current_tools)
+                allow_web_scraper = st.checkbox("Web Scraper", value="web_scraper" in current_tools, key="edit_agent_tool_web_scraper")
             with col3:
-                allow_youtube = st.checkbox("YouTube", value="youtube" in current_tools or "youtube_summarizer" in current_tools)
+                allow_youtube = st.checkbox("YouTube", value="youtube" in current_tools or "youtube_summarizer" in current_tools, key="edit_agent_tool_youtube")
             with col4:
-                allow_data_analyzer = st.checkbox("Data Analyzer", value="data_analyzer" in current_tools)
+                allow_data_analyzer = st.checkbox("Data Analyzer", value="data_analyzer" in current_tools, key="edit_agent_tool_data_analyzer")
             
             # Tags
             tags_input = st.text_input(
                 "Tags (comma-separated)",
-                value=", ".join(agent.tags) if agent.tags else ""
+                value=", ".join(agent.tags) if agent.tags else "",
+                key="edit_agent_tags_input"
             )
             
             change_summary = st.text_input(
                 "Change Summary (optional)",
                 placeholder="e.g., Updated system prompt to be more concise",
-                help="Describe what you changed"
+                help="Describe what you changed",
+                key="edit_agent_change_summary"
             )
             
             # Submit button

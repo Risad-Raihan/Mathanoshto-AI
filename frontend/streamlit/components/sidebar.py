@@ -361,12 +361,35 @@ def render_sidebar() -> dict:
                         key=f"conv_{conv.id}",
                         use_container_width=True
                     ):
-                        # Load conversation
-                        from backend.core.chat_manager import ChatManager
-                        st.session_state.chat_manager = ChatManager(user_id=user_id, conversation_id=conv.id)
-                        st.session_state.current_conversation_id = conv.id
-                        st.session_state.messages = st.session_state.chat_manager.get_conversation_history()
-                        st.rerun()
+                        # Load conversation with error handling
+                        try:
+                            from backend.core.chat_manager import ChatManager
+                            # Create chat manager for this conversation
+                            chat_manager = ChatManager(user_id=user_id, conversation_id=conv.id)
+                            # Get conversation history
+                            messages = chat_manager.get_conversation_history()
+                            
+                            # Validate messages loaded successfully
+                            if not isinstance(messages, list):
+                                st.error("Failed to load conversation: Invalid message format")
+                                return
+                            
+                            # Update session state atomically
+                            st.session_state.chat_manager = chat_manager
+                            st.session_state.current_conversation_id = conv.id
+                            st.session_state.messages = messages
+                            
+                            # Clear any existing message input
+                            if 'user_message' in st.session_state:
+                                del st.session_state['user_message']
+                            
+                            # Rerun to reflect changes
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Failed to load conversation: {str(e)}")
+                            print(f"Error loading conversation {conv.id}: {e}")
+                            import traceback
+                            traceback.print_exc()
                     
                     # Display metadata
                     time_diff = datetime.now() - conv.created_at

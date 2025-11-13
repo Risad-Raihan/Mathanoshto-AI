@@ -177,9 +177,12 @@ class MessageDB:
         """Get all messages in a conversation"""
         db = get_db()
         try:
-            return db.query(Message).filter(
+            messages = db.query(Message).filter(
                 Message.conversation_id == conversation_id
             ).order_by(Message.created_at).all()
+            # Detach from session to avoid lazy loading issues
+            db.expunge_all()
+            return messages
         finally:
             db.close()
     

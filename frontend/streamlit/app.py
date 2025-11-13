@@ -27,6 +27,9 @@ import base64
 from backend.database.operations import init_database
 init_database()
 
+# Import session state manager FIRST
+from frontend.streamlit.utils.session_state import init_session_state, SessionStateManager
+
 # Import components
 from frontend.streamlit.components.sidebar import render_sidebar
 from frontend.streamlit.components.chat import render_chat
@@ -55,19 +58,14 @@ bg_image_base64 = get_base64_image(bg_image_path)
 if 'dark_mode' not in st.session_state:
     st.session_state.dark_mode = True
 
+# Initialize session state (centralized, prevents race conditions)
+init_session_state()
+
 # Apply custom CSS with color palette system
 st.markdown(
-    get_custom_css(bg_image_base64, st.session_state.dark_mode),
+    get_custom_css(bg_image_base64, SessionStateManager.get('dark_mode', True)),
     unsafe_allow_html=True
 )
-
-# Session state initialization
-if 'chat_manager' not in st.session_state:
-    st.session_state.chat_manager = None
-if 'current_conversation_id' not in st.session_state:
-    st.session_state.current_conversation_id = None
-if 'messages' not in st.session_state:
-    st.session_state.messages = []
 
 # Check if user is logged in
 if not require_login():
