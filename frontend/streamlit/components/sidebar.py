@@ -196,12 +196,12 @@ def render_sidebar() -> dict:
         
         st.title("⚙️ Settings")
         
-        # Provider selection
-        available_providers = model_factory.get_available_providers()
+        # Provider selection - Get user-specific providers based on their API keys
+        available_providers = model_factory.get_user_available_providers(user_id)
         
         if not available_providers:
-            st.error("❌ No LLM providers available. Please check your API keys in .env file.")
-            st.info("Add OPENAI_API_KEY and/or GEMINI_API_KEY to your .env file")
+            st.error("❌ No LLM providers available. Please add your API keys.")
+            st.info("Go to 👤 Profile → API Keys to add your OpenAI, Gemini, or Anthropic API keys")
             return {}
         
         provider = st.selectbox(
@@ -210,18 +210,25 @@ def render_sidebar() -> dict:
             format_func=lambda x: x.upper()
         )
         
-        # Model selection (dynamic based on provider)
-        models = model_factory.get_models_for_provider(provider)
+        # Model selection (dynamic based on provider) - Use user-specific provider
+        models = model_factory.get_models_for_provider(provider, user_id=user_id)
         model_options = {m.display_name: m.name for m in models}
         
+        if not model_options:
+            st.error(f"No models available for {provider.upper()}")
+            st.info(f"Please ensure you have added your {provider.upper()} API key in Profile → API Keys")
+            return {}
+        
+        # Key ensures model selection resets when provider changes
         selected_display_name = st.selectbox(
             "Model",
-            list(model_options.keys())
+            list(model_options.keys()),
+            key=f"model_select_{provider}"
         )
-        model = model_options[selected_display_name]
+        model = model_options.get(selected_display_name, list(model_options.values())[0])
         
-        # Show model info
-        model_info = model_factory.get_model_info(provider, model)
+        # Show model info (user-specific)
+        model_info = model_factory.get_model_info(provider, model, user_id=user_id)
         if model_info:
             with st.expander("ℹ️ Model Info"):
                 st.write(f"**Description:** {model_info.description}")

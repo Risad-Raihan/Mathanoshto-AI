@@ -81,10 +81,10 @@ class ChatManager:
         Returns:
             CompletionResponse or AsyncIterator for streaming
         """
-        # Get provider instance
-        llm_provider = self.factory.get_provider(provider)
+        # Get provider instance using user's API keys from database
+        llm_provider = self.factory.get_user_provider(self.user_id, provider)
         if not llm_provider:
-            raise ValueError(f"Provider {provider} not available")
+            raise ValueError(f"Provider {provider} not available. Please add your API key in settings.")
         
         # Add user message to database
         MessageDB.add_message(
@@ -228,17 +228,55 @@ class ChatManager:
                 
                 # If we have tool results, make a second call with the results
                 if tool_results:
-                    # Add assistant's tool call message
-                    messages.append({
-                        "role": "assistant",
-                        "content": response.content or "",
-                        "tool_calls": response.tool_calls
-                    })
-                    
-                    # Add tool results
-                    for tool_result in tool_results:
-                        messages.append(tool_result)
-                        print(f"📤 Sending tool result to LLM: {tool_result['content'][:200]}...")
+                    # Format tool results based on provider
+                    if provider.lower() == "anthropic":
+                        # Anthropic-specific format
+                        # Add assistant's message with tool_use blocks
+                        messages.append({
+                            "role": "assistant",
+                            "content": response.raw_response.content  # Use raw response content which includes tool_use blocks
+                        })
+                        
+                        # Add tool results as user message with tool_result content
+                        tool_result_content = []
+                        for tool_result in tool_results:
+                            tool_result_content.append({
+                                "type": "tool_result",
+                                "tool_use_id": tool_result["tool_call_id"],
+                                "content": tool_result["content"]
+                            })
+                            print(f"📤 Sending tool result to LLM: {tool_result['content'][:200]}...")
+                        
+                        messages.append({
+                            "role": "user",
+                            "content": tool_result_content
+                        })
+                    elif provider.lower() == "gemini":
+                        # Gemini-specific format
+                        # Add assistant's message with function call
+                        messages.append({
+                            "role": "assistant",
+                            "content": response.content or ""
+                        })
+                        
+                        # Add function responses as user message
+                        for tool_result in tool_results:
+                            messages.append({
+                                "role": "user",
+                                "content": f"Function {tool_result['name']} result: {tool_result['content']}"
+                            })
+                            print(f"📤 Sending tool result to LLM: {tool_result['content'][:200]}...")
+                    else:
+                        # OpenAI format
+                        messages.append({
+                            "role": "assistant",
+                            "content": response.content or "",
+                            "tool_calls": response.tool_calls
+                        })
+                        
+                        for tool_result in tool_results:
+                            messages.append(tool_result)
+                            print(f"📤 Sending tool result to LLM: {tool_result['content'][:200]}...")
                     
                     # Make second API call with tool results
                     print("🔄 Generating response with search results...")

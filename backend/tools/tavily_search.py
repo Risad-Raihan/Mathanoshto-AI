@@ -2,18 +2,35 @@
 Tavily Web Search Tool
 """
 import json
-from typing import Dict, List
+from typing import Dict, List, Optional
 from tavily import TavilyClient
 from backend.config.settings import settings
+from backend.database.user_operations import UserAPIKeyDB
 
 class TavilySearchTool:
     """Web search using Tavily API"""
     
-    def __init__(self):
-        if not settings.tavily_api_key:
-            raise ValueError("Tavily API key not configured in .env file")
+    def __init__(self, api_key: Optional[str] = None, user_id: Optional[int] = None):
+        """
+        Initialize Tavily search tool
         
-        self.client = TavilyClient(api_key=settings.tavily_api_key)
+        Args:
+            api_key: Tavily API key (optional, will try to load from database if user_id provided)
+            user_id: User ID to load API key from database
+        """
+        # Try to get API key from user's database if user_id provided
+        if not api_key and user_id:
+            user_keys = UserAPIKeyDB.get_all_user_keys(user_id)
+            api_key = user_keys.get('tavily')
+        
+        # Fallback to settings if still no key
+        if not api_key:
+            api_key = settings.tavily_api_key
+            
+        if not api_key:
+            raise ValueError("Tavily API key not found. Please add your Tavily API key in settings.")
+        
+        self.client = TavilyClient(api_key=api_key)
     
     @staticmethod
     def get_tool_definition() -> Dict:

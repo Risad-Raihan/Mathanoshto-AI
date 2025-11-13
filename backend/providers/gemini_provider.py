@@ -4,6 +4,7 @@ Supports Gemini 1.5 Pro, Flash, and 2.0 models
 """
 from typing import List, Dict, Optional, AsyncIterator, Any
 import google.generativeai as genai
+import google.ai.generativelanguage as glm
 import yaml
 from PIL import Image
 import io
@@ -143,6 +144,21 @@ class GeminiProvider(BaseLLMProvider):
         gemini_tools = None
         if tools and self.supports_tools(model):
             gemini_tools = self._convert_tools_to_gemini_format(tools)
+            # Update model with tools
+            if gemini_tools:
+                if system_instruction:
+                    gemini_model = genai.GenerativeModel(
+                        model_name=model,
+                        generation_config=generation_config,
+                        system_instruction=system_instruction,
+                        tools=gemini_tools
+                    )
+                else:
+                    gemini_model = genai.GenerativeModel(
+                        model_name=model,
+                        generation_config=generation_config,
+                        tools=gemini_tools
+                    )
         
         if stream:
             return self._stream_completion(gemini_model, conversation)
@@ -185,22 +201,38 @@ class GeminiProvider(BaseLLMProvider):
             # Check for function calls
             tool_calls = None
             finish_reason = "stop"
+            content = ""
             
             if response.candidates[0].content.parts:
                 first_part = response.candidates[0].content.parts[0]
-                if hasattr(first_part, 'function_call'):
+                if hasattr(first_part, 'function_call') and first_part.function_call:
                     # Has function call
                     finish_reason = "tool_calls"
+                    import json
+                    # Convert args to JSON string
+                    args_dict = dict(first_part.function_call.args) if first_part.function_call.args else {}
                     tool_calls = [{
+                        "id": f"call_{first_part.function_call.name}",  # Generate ID for compatibility
                         "type": "function",
                         "function": {
                             "name": first_part.function_call.name,
-                            "arguments": str(first_part.function_call.args)
+                            "arguments": json.dumps(args_dict)
                         }
                     }]
+                    # When there's a function call, there's usually no text content
+                    content = ""
+                else:
+                    # Normal text response
+                    content = response.text
+            else:
+                # No parts, try to get text
+                try:
+                    content = response.text
+                except:
+                    content = ""
             
             return CompletionResponse(
-                content=response.text,
+                content=content,
                 model=model_name,
                 provider=self.provider_name,
                 input_tokens=input_tokens,
@@ -287,9 +319,47 @@ class GeminiProvider(BaseLLMProvider):
             "content": [image, text]
         }
     
-    def _convert_tools_to_gemini_format(self, tools: List[Dict]) -> List:
+    def _convert_tools_to_gemini_format(self, tools: List[Dict]) -> List[genai.protos.Tool]:
         """Convert OpenAI-style tool definitions to Gemini format"""
-        # This is a placeholder - implement actual conversion
-        # Gemini uses a different function calling format
-        return tools
+        gemini_functions = []
+        for tool in tools:
+            if tool.get('type') == 'function':
+                func = tool['function']
+                
+                # Convert OpenAI parameters to Gemini format
+                parameters = func.get('parameters', {})
+                properties = parameters.get('properties', {})
+                required = parameters.get('required', [])
+                
+                # Build Gemini function declaration
+                gemini_func = glm.FunctionDeclaration(
+                    name=func['name'],
+                    description=func['description'],
+                    parameters=glm.Schema(
+                        type=glm.Type.OBJECT,
+                        properties={
+                            key: glm.Schema(
+                                type=self._convert_type_to_gemini(val.get('type', 'string')),
+                                description=val.get('description', '')
+                            )
+                            for key, val in properties.items()
+                        },
+                        required=required
+                    )
+                )
+                gemini_functions.append(gemini_func)
+        
+        return [glm.Tool(function_declarations=gemini_functions)] if gemini_functions else None
+    
+    def _convert_type_to_gemini(self, openai_type: str) -> glm.Type:
+        """Convert OpenAI parameter type to Gemini type"""
+        type_mapping = {
+            'string': glm.Type.STRING,
+            'number': glm.Type.NUMBER,
+            'integer': glm.Type.INTEGER,
+            'boolean': glm.Type.BOOLEAN,
+            'array': glm.Type.ARRAY,
+            'object': glm.Type.OBJECT
+        }
+        return type_mapping.get(openai_type.lower(), glm.Type.STRING)
 

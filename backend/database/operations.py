@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker, Session
 from typing import List, Optional
 from datetime import datetime
 
-from backend.database.models import Base, Conversation, Message, Attachment, ToolCall
+from backend.database.models import Base, Conversation, Message, Attachment, ToolCall, UserSession
 from backend.config.settings import settings
 
 # Import all models to ensure they're registered with SQLAlchemy

@@ -50,7 +50,7 @@ class UserAPIKey(Base):
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     
     # API key info
-    provider = Column(String(50), nullable=False)  # 'openai', 'gemini', 'anthropic', 'tavily'
+    provider = Column(String(50), nullable=False)  # 'openai', 'gemini', 'anthropic', 'tavily', 'firecrawl', 'mathpix'
     key_name = Column(String(100), nullable=False)  # e.g., 'OPENAI_API_KEY'
     encrypted_key = Column(Text, nullable=False)  # Encrypted API key
     
@@ -66,6 +66,30 @@ class UserAPIKey(Base):
     
     def __repr__(self):
         return f"<UserAPIKey(id={self.id}, user_id={self.user_id}, provider='{self.provider}')>"
+
+
+class UserSession(Base):
+    """User session tokens for 'Remember Me' functionality"""
+    __tablename__ = 'user_sessions'
+    
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    session_token = Column(String(255), unique=True, nullable=False, index=True)
+    
+    # Session metadata
+    ip_address = Column(String(50), nullable=True)
+    user_agent = Column(String(500), nullable=True)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=False)
+    last_activity = Column(DateTime, default=datetime.utcnow)
+    is_active = Column(Boolean, default=True)
+    
+    # Relationships
+    user = relationship("User")
+    
+    def __repr__(self):
+        return f"<UserSession(id={self.id}, user_id={self.user_id}, token='{self.session_token[:8]}...')>"
 
 class Conversation(Base):
     """Conversation/Chat session"""

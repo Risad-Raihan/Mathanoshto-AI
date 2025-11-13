@@ -1,13 +1,13 @@
 """
-Database operations for users and API keys
+Database operations for users, API keys, and sessions
 """
 from sqlalchemy.orm import Session
 from typing import List, Optional, Dict
-from datetime import datetime
+from datetime import datetime, timedelta
 
-from backend.database.models import User, UserAPIKey
+from backend.database.models import User, UserAPIKey, UserSession
 from backend.database.operations import get_db
-from backend.auth import hash_password, verify_password, encrypt_api_key, decrypt_api_key
+from backend.auth import hash_password, verify_password, encrypt_api_key, decrypt_api_key, generate_session_token, hash_session_token
 
 
 class UserDB:
@@ -53,7 +53,11 @@ class UserDB:
         """Get user by username"""
         db = get_db()
         try:
-            return db.query(User).filter(User.username == username).first()
+            user = db.query(User).filter(User.username == username).first()
+            if user:
+                db.refresh(user)
+                db.expunge(user)
+            return user
         finally:
             db.close()
     
@@ -62,7 +66,11 @@ class UserDB:
         """Get user by ID"""
         db = get_db()
         try:
-            return db.query(User).filter(User.id == user_id).first()
+            user = db.query(User).filter(User.id == user_id).first()
+            if user:
+                db.refresh(user)
+                db.expunge(user)
+            return user
         finally:
             db.close()
     
@@ -312,6 +320,156 @@ class UserAPIKeyDB:
             if key_obj:
                 key_obj.is_active = False
                 db.commit()
+        finally:
+            db.close()
+
+
+class UserSessionDB:
+    """Database operations for user sessions (Remember Me functionality)"""
+    
+    @staticmethod
+    def create_session(
+        user_id: int,
+        ip_address: Optional[str] = None,
+        user_agent: Optional[str] = None,
+        expires_days: int = 30
+    ) -> tuple[str, UserSession]:
+        """
+        Create a new session token for a user
+        
+        Args:
+            user_id: User ID
+            ip_address: Client IP address
+            user_agent: Client user agent
+            expires_days: Number of days until session expires (default: 30)
+            
+        Returns:
+            Tuple of (plain_token, session_object)
+        """
+        db = get_db()
+        try:
+            # Generate session token
+            plain_token = generate_session_token()
+            hashed_token = hash_session_token(plain_token)
+            
+            # Calculate expiration
+            expires_at = datetime.utcnow() + timedelta(days=expires_days)
+            
+            # Create session
+            session = UserSession(
+                user_id=user_id,
+                session_token=hashed_token,
+                ip_address=ip_address,
+                user_agent=user_agent,
+                expires_at=expires_at
+            )
+            
+            db.add(session)
+            db.commit()
+            db.refresh(session)
+            
+            return plain_token, session
+        finally:
+            db.close()
+    
+    @staticmethod
+    def validate_session(token: str) -> Optional[User]:
+        """
+        Validate a session token and return the associated user
+        
+        Args:
+            token: Plain session token
+            
+        Returns:
+            User object if session is valid, None otherwise
+        """
+        db = get_db()
+        try:
+            hashed_token = hash_session_token(token)
+            
+            # Find session
+            session = db.query(UserSession).filter(
+                UserSession.session_token == hashed_token,
+                UserSession.is_active == True,
+                UserSession.expires_at > datetime.utcnow()
+            ).first()
+            
+            if not session:
+                return None
+            
+            # Get user
+            user = db.query(User).filter(
+                User.id == session.user_id,
+                User.is_active == True
+            ).first()
+            
+            if user:
+                # Update last activity
+                session.last_activity = datetime.utcnow()
+                db.commit()
+                
+                # Refresh user to load all attributes
+                db.refresh(user)
+                
+                # Expunge user from session to prevent DetachedInstanceError
+                # This makes the object independent of the session
+                db.expunge(user)
+            
+            return user
+        finally:
+            db.close()
+    
+    @staticmethod
+    def delete_session(token: str):
+        """
+        Delete a session (logout)
+        
+        Args:
+            token: Plain session token
+        """
+        db = get_db()
+        try:
+            hashed_token = hash_session_token(token)
+            
+            session = db.query(UserSession).filter(
+                UserSession.session_token == hashed_token
+            ).first()
+            
+            if session:
+                db.delete(session)
+                db.commit()
+        finally:
+            db.close()
+    
+    @staticmethod
+    def delete_user_sessions(user_id: int):
+        """
+        Delete all sessions for a user (logout from all devices)
+        
+        Args:
+            user_id: User ID
+        """
+        db = get_db()
+        try:
+            db.query(UserSession).filter(
+                UserSession.user_id == user_id
+            ).delete()
+            db.commit()
+        finally:
+            db.close()
+    
+    @staticmethod
+    def cleanup_expired_sessions():
+        """
+        Remove expired sessions from database
+        Should be run periodically (e.g., daily cron job)
+        """
+        db = get_db()
+        try:
+            db.query(UserSession).filter(
+                UserSession.expires_at < datetime.utcnow()
+            ).delete()
+            db.commit()
         finally:
             db.close()
 
