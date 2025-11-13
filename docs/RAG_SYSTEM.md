@@ -56,12 +56,13 @@ User Query → Hybrid Search → Re-ranking → Citations → Response
 
 ## 🔧 Configuration
 
-RAG auto-configures per user. Defaults:
-- Chunk size: 1000 chars
-- Overlap: 200 chars
-- Top-K: 5 chunks
-- Method: Hybrid (70% semantic, 30% keyword)
-- Re-ranking: Enabled (MMR)
+RAG auto-configures per user. Defaults (optimized for >=85% accuracy):
+- Chunk size: 1500 chars (improved context)
+- Overlap: 300 chars (better continuity)
+- Top-K: 7 chunks (more candidates)
+- Min similarity: 0.4 (wider relevance net)
+- Method: Hybrid (80% semantic, 20% keyword)
+- Re-ranking: Enabled (MMR λ=0.7, prioritize relevance)
 - Citations: Enabled (inline format)
 
 ---

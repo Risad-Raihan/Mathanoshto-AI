@@ -22,7 +22,7 @@ def render_api_key_management():
     # Show status of existing keys
     if existing_keys:
         st.markdown("### 📋 Your API Keys:")
-        for key in existing_keys:
+        for idx, key in enumerate(existing_keys):
             if key['is_active']:
                 col1, col2, col3 = st.columns([3, 2, 1])
                 with col1:
@@ -30,7 +30,7 @@ def render_api_key_management():
                 with col2:
                     st.caption(f"Added: {key['created_at'].strftime('%Y-%m-%d')}")
                 with col3:
-                    if st.button("🗑️", key=f"delete_{key['provider']}", help="Delete key"):
+                    if st.button("🗑️", key=f"delete_{key['provider']}_{idx}", help="Delete key"):
                         UserAPIKeyDB.delete_api_key(user_id, key['provider'])
                         st.success(f"Deleted {key['provider']} API key")
                         st.rerun()
@@ -42,12 +42,14 @@ def render_api_key_management():
     with st.form("add_api_key_form", clear_on_submit=True):
         provider = st.selectbox(
             "Provider",
-            options=['openai', 'gemini', 'anthropic', 'tavily'],
+            options=['openai', 'gemini', 'anthropic', 'tavily', 'firecrawl', 'mathpix'],
             format_func=lambda x: {
                 'openai': 'OpenAI (GPT models)',
                 'gemini': 'Google Gemini',
                 'anthropic': 'Anthropic (Claude)',
-                'tavily': 'Tavily (Web Search)'
+                'tavily': 'Tavily (Web Search)',
+                'firecrawl': 'Firecrawl (Advanced Web Scraping)',
+                'mathpix': 'Mathpix (OCR & Math Recognition)'
             }.get(x, x.upper())
         )
         
@@ -80,7 +82,9 @@ def render_api_key_management():
                         'openai': 'OPENAI_API_KEY',
                         'gemini': 'GEMINI_API_KEY',
                         'anthropic': 'ANTHROPIC_API_KEY',
-                        'tavily': 'TAVILY_API_KEY'
+                        'tavily': 'TAVILY_API_KEY',
+                        'firecrawl': 'FIRECRAWL_API_KEY',
+                        'mathpix': 'MATHPIX_API_KEY'
                     }
                     
                     UserAPIKeyDB.add_api_key(
@@ -120,6 +124,24 @@ def render_api_key_management():
         2. Sign up or sign in
         3. Get your API key from the dashboard
         
-        **Note:** Keep your API keys secure and never share them publicly!
+        ### Firecrawl (Advanced Web Scraping) - Optional
+        1. Visit [Firecrawl](https://firecrawl.dev)
+        2. Sign up for an account
+        3. Get your API key from the dashboard
+        4. **Note:** Not currently in use, but supported for future features
+        
+        ### Mathpix (OCR & Math Recognition) - Optional
+        1. Visit [Mathpix OCR](https://mathpix.com/ocr)
+        2. Create an account
+        3. Get your API credentials
+        4. **Note:** Not currently in use, will be used for advanced OCR features
+        
+        ---
+        
+        **Important:** 
+        - Your API keys are encrypted before storage
+        - Keys are never shared or logged
+        - You can delete keys anytime
+        - Each user manages their own keys (no shared keys in Docker)
         """)
 

@@ -1,0 +1,112 @@
+
+  You can now view your Streamlit app in your browser.
+
+  Local URL: http://localhost:8501
+  Network URL: http://192.168.0.129:8501
+
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+E0000 00:00:1763024757.067829   50313 alts_credentials.cc:93] ALTS creds ignored. Not running on GCP and untrusted ALTS is not enabled.
+Exception ignored in: <function InterceptedCall.__del__ at 0x7fc664f5fec0>
+Traceback (most recent call last):
+  File "/home/risad/.pyenv/versions/3.12.10/envs/edubot/lib/python3.12/site-packages/grpc/aio/_interceptor.py", line 321, in __del__
+    self.cancel()
+  File "/home/risad/.pyenv/versions/3.12.10/envs/edubot/lib/python3.12/site-packages/grpc/aio/_interceptor.py", line 356, in cancel
+    if not self._interceptors_task.done():
+           ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'InterceptedUnaryUnaryCall' object has no attribute '_interceptors_task'
+/home/risad/.pyenv/versions/3.12.10/envs/edubot/lib/python3.12/site-packages/streamlit/runtime/scriptrunner/script_runner.py:752: RuntimeWarning: coroutine 'InterceptedUnaryUnaryCall._invoke' was never awaited
+  gc.collect(2)
+RuntimeWarning: Enable tracemalloc to get the object allocation traceback
+E0000 00:00:1763024780.038576   50400 alts_credentials.cc:93] ALTS creds ignored. Not running on GCP and untrusted ALTS is not enabled.
+E0000 00:00:1763024878.202106   50773 alts_credentials.cc:93] ALTS creds ignored. Not running on GCP and untrusted ALTS is not enabled.
+Exception ignored in: <function InterceptedCall.__del__ at 0x7fc664f5fec0>
+Traceback (most recent call last):
+  File "/home/risad/.pyenv/versions/3.12.10/envs/edubot/lib/python3.12/site-packages/grpc/aio/_interceptor.py", line 321, in __del__
+    self.cancel()
+  File "/home/risad/.pyenv/versions/3.12.10/envs/edubot/lib/python3.12/site-packages/grpc/aio/_interceptor.py", line 356, in cancel
+    if not self._interceptors_task.done():
+           ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'InterceptedUnaryUnaryCall' object has no attribute '_interceptors_task'
+E0000 00:00:1763024925.905671   51091 alts_credentials.cc:93] ALTS creds ignored. Not running on GCP and untrusted ALTS is not enabled.
+Exception ignored in: <function InterceptedCall.__del__ at 0x7fc664f5fec0>
+Traceback (most recent call last):
+  File "/home/risad/.pyenv/versions/3.12.10/envs/edubot/lib/python3.12/site-packages/grpc/aio/_interceptor.py", line 321, in __del__
+    self.cancel()
+  File "/home/risad/.pyenv/versions/3.12.10/envs/edubot/lib/python3.12/site-packages/grpc/aio/_interceptor.py", line 356, in cancel
+    if not self._interceptors_task.done():
+           ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'InterceptedUnaryUnaryCall' object has no attribute '_interceptors_task'
+✓ Database initialized
+✓ Loaded OpenAI provider
+✓ Loaded Gemini provider
+✓ Loaded Anthropic provider
+✓ Database initialized
+✓ Database initialized
+✓ Database initialized
+✓ Database initialized
+✓ Database initialized
+✅ Loaded embedding model: all-MiniLM-L6-v2 (384 dimensions)
+✅ ChromaDB initialized at data/chroma_db
+Failed to auto-generate title: Gemini API error: Event loop is closed
+✓ Database initialized
+✓ Database initialized
+✅ Loaded embedding model: all-MiniLM-L6-v2 (384 dimensions)
+✅ ChromaDB initialized at data/chroma_db
+🔧 Tool Call: web_search(temperature in Dhaka today)
+📊 Tavily Response Keys: dict_keys(['query', 'follow_up_questions', 'answer', 'images', 'results', 'response_time', 'request_id'])
+📊 Answer: Today, Dhaka has a temperature of around 85°F (29°C). The weather is clear with light winds. For precise details, check a local weather service.
+📊 Results count: 5
+📊 Images count: 5
+🖼️ Processing 5 Tavily images...
+✅ Image handler loaded successfully
+✅ Got user_id from session: 1
+📥 Attempting to download image 1: http://2.bp.blogspot.com/-vRuz9aDMfGU/U0-iwpHaLYI/AAAAAAAAAkY/YsLO-Fl7RDA/s1600/...
+✅ Image 1 downloaded: uploads/search_images/1_20251113_150628_acda9004.JPG
+📥 Attempting to download image 2: https://cdn.hikb.at/charts/meteo-average-weather-weekly/dhaka-meteo-average-weat...
+✅ Image 2 downloaded: uploads/search_images/1_20251113_150628_153a6261.png
+📥 Attempting to download image 3: https://www.researchgate.net/publication/360070146/figure/fig3/AS:11469529012346...
+✅ Image 3 downloaded: uploads/search_images/1_20251113_150628_9883674a.png
+✅ Successfully downloaded 3 out of 5 images
+📊 Final formatted result length: 2076 chars
+✅ Search complete with 5 results
+✅ Tool web_search executed successfully
+📤 Sending tool result to LLM: 📝 **Summary:** Today, Dhaka has a temperature of around 85°F (29°C). The weather is clear with light winds. For precise details, check a local weather service.
+
+
+🖼️ **Related Images (5):**
+
+
+![Image 1...
+🔄 Generating response with search results...
+📝 Total messages in conversation: 6
+✅ Got final response (has tool_calls: False)
+📝 Combined tool results with LLM response for display
+✓ Database initialized
+✓ Database initialized
+✓ Database initialized
+✓ Database initialized
+✓ Database initialized
+✅ Loaded embedding model: all-MiniLM-L6-v2 (384 dimensions)
+✅ ChromaDB initialized at data/chroma_db
+Failed to auto-generate title: Gemini API error: Event loop is closed
+✓ Database initialized
+✓ Database initialized
+✓ Database initialized
+✓ Database initialized
+✓ Database initialized
+✅ Loaded embedding model: all-MiniLM-L6-v2 (384 dimensions)
+✅ ChromaDB initialized at data/chroma_db
+🔧 Tool Call: summarize_youtube_video(https://youtu.be/Ph10on9Xaxk?si=xFp4iheWOCwXSl-i)
+✅ Tool summarize_youtube_video executed successfully
+📤 Sending tool result to LLM: {
+  "success": true,
+  "video_id": "Ph10on9Xaxk",
+  "url": "https://www.youtube.com/watch?v=Ph10on9Xaxk",
+  "transcript": "[0:04] Anyone who studies the Quran seriously\n[0:07] knows that a huge compo...
+🔄 Generating response with search results...
+📝 Total messages in conversation: 4
+✅ Got final response (has tool_calls: False)
+📝 Combined tool results with LLM response for display
+Failed to auto-generate title: Gemini API error: Event loop is closed
+✓ Database initialized
+  Stopping...

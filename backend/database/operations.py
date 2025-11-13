@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker, Session
 from typing import List, Optional
 from datetime import datetime
 
-from backend.database.models import Base, Conversation, Message, Attachment, ToolCall
+from backend.database.models import Base, Conversation, Message, Attachment, ToolCall, UserSession
 from backend.config.settings import settings
 
 # Import all models to ensure they're registered with SQLAlchemy
@@ -41,6 +41,7 @@ def init_database():
     """Initialize database tables"""
     Base.metadata.create_all(bind=engine)
     print("✓ Database initialized")
+    print("ℹ️  First-time users: Please sign up to create an account")
 
 def get_db() -> Session:
     """Get database session"""
@@ -177,9 +178,12 @@ class MessageDB:
         """Get all messages in a conversation"""
         db = get_db()
         try:
-            return db.query(Message).filter(
+            messages = db.query(Message).filter(
                 Message.conversation_id == conversation_id
             ).order_by(Message.created_at).all()
+            # Detach from session to avoid lazy loading issues
+            db.expunge_all()
+            return messages
         finally:
             db.close()
     

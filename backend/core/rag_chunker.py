@@ -45,8 +45,8 @@ class DocumentChunker:
     
     def __init__(
         self,
-        chunk_size: int = 1000,
-        chunk_overlap: int = 200,
+        chunk_size: int = 1500,  # Optimized from 1000 for >=85% accuracy
+        chunk_overlap: int = 300,  # Optimized from 200 for better continuity
         strategy: ChunkStrategy = ChunkStrategy.RECURSIVE
     ):
         self.chunk_size = chunk_size

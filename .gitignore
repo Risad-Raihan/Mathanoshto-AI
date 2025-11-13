@@ -1,4 +1,50 @@
+# Environment variables
 .env
 env.backup.txt
+.env.*
+
+# Output directories
 output/
+
+# IDE
 .obsidian/
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+venv/
+env/
+
+# Docker volumes (data persists in containers)
+data/
+uploads/
+logs/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary
+*.tmp
+*.temp
+.cache/
+
+# Test files
+.pytest_cache/
+htmlcov/
+.coverage

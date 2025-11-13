@@ -111,13 +111,15 @@ def render_user_profile():
                     "Default Provider",
                     options=['openai', 'gemini'],
                     index=0 if user.default_provider == 'openai' else 1,
-                    format_func=lambda x: x.upper()
+                    format_func=lambda x: x.upper(),
+                    key="pref_default_provider_select"
                 )
                 
                 default_model = st.text_input(
                     "Default Model",
                     value=user.default_model or 'gpt-4o',
-                    placeholder="e.g., gpt-4o, gemini-pro"
+                    placeholder="e.g., gpt-4o, gemini-pro",
+                    key="pref_default_model_input"
                 )
             
             with col2:
@@ -127,7 +129,8 @@ def render_user_profile():
                     max_value=2.0,
                     value=float(user.default_temperature) if user.default_temperature else 0.7,
                     step=0.1,
-                    help="Higher = more creative, Lower = more focused"
+                    help="Higher = more creative, Lower = more focused",
+                    key="pref_default_temperature_slider"
                 )
                 
                 default_max_tokens = st.number_input(
@@ -135,17 +138,19 @@ def render_user_profile():
                     min_value=100,
                     max_value=8000,
                     value=user.default_max_tokens or 2000,
-                    step=100
+                    step=100,
+                    key="pref_default_max_tokens_input"
                 )
             
             theme = st.selectbox(
                 "Theme",
                 options=['dark', 'light'],
                 index=0 if user.theme == 'dark' else 1,
-                format_func=lambda x: f"🌙 {x.capitalize()}" if x == 'dark' else f"☀️ {x.capitalize()}"
+                format_func=lambda x: f"🌙 {x.capitalize()}" if x == 'dark' else f"☀️ {x.capitalize()}",
+                key="pref_theme_select"
             )
             
-            submitted = st.form_submit_button("💾 Save Preferences", use_container_width=True)
+            submitted = st.form_submit_button("💾 Save Preferences", use_container_width=True, type="primary")
             
             if submitted:
                 try:

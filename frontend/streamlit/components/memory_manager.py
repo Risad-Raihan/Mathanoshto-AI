@@ -386,7 +386,8 @@ class MemoryManagerUI:
                 "Memory Content",
                 placeholder="Enter what you want the AI to remember...",
                 help="Describe the information clearly and concisely",
-                height=100
+                height=100,
+                key="memory_content_input"
             )
             
             col1, col2 = st.columns(2)
@@ -395,19 +396,22 @@ class MemoryManagerUI:
                 memory_type = st.selectbox(
                     "Type",
                     options=list(MemoryManagerUI.MEMORY_TYPES.keys()),
-                    format_func=lambda x: f"{MemoryManagerUI.MEMORY_TYPES[x]['icon']} {MemoryManagerUI.MEMORY_TYPES[x]['name']}"
+                    format_func=lambda x: f"{MemoryManagerUI.MEMORY_TYPES[x]['icon']} {MemoryManagerUI.MEMORY_TYPES[x]['name']}",
+                    key="memory_type_select"
                 )
             
             with col2:
                 category = st.text_input(
                     "Category (Optional)",
-                    placeholder="e.g., hobby, work, family"
+                    placeholder="e.g., hobby, work, family",
+                    key="memory_category_input"
                 )
             
             # Tags
             tags_input = st.text_input(
                 "Tags (comma-separated)",
-                placeholder="tag1, tag2, tag3"
+                placeholder="tag1, tag2, tag3",
+                key="memory_tags_input"
             )
             
             # Importance slider
@@ -417,7 +421,8 @@ class MemoryManagerUI:
                 max_value=1.0,
                 value=0.5,
                 step=0.1,
-                help="How important is this memory? (0=low, 1=critical)"
+                help="How important is this memory? (0=low, 1=critical)",
+                key="memory_importance_slider"
             )
             
             # Options
@@ -425,12 +430,14 @@ class MemoryManagerUI:
             with col3:
                 is_pinned = st.checkbox(
                     "📌 Pin this memory",
-                    help="Always include in AI context"
+                    help="Always include in AI context",
+                    key="memory_is_pinned_checkbox"
                 )
             with col4:
                 is_verified = st.checkbox(
                     "✅ Mark as verified",
-                    help="Confirm this information is accurate"
+                    help="Confirm this information is accurate",
+                    key="memory_is_verified_checkbox"
                 )
             
             # Submit

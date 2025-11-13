@@ -138,14 +138,17 @@ def render_chat(settings: dict):
     
     # Check if settings are valid
     if not settings:
-        st.warning("⚠️ Please configure your API keys in the .env file to use the assistant.")
+        st.warning("⚠️ Please add your API keys to start using the assistant.")
         st.info("""
-        **Steps to configure:**
-        1. Edit the `.env` file in your project root
-        2. Add your API keys:
-           - `OPENAI_API_KEY=your_key_here`
-           - `GEMINI_API_KEY=your_key_here`
-        3. Restart the application
+        **Steps to get started:**
+        1. Click on **👤 Profile** button in the sidebar
+        2. Go to **API Keys** section
+        3. Add your API keys for:
+           - OpenAI (for GPT models)
+           - Google Gemini (for Gemini models)
+           - Anthropic (for Claude Sonnet models)
+        4. Your keys are encrypted and stored securely
+        5. Once added, select a provider and model from the sidebar
         """)
         return
     
@@ -498,11 +501,22 @@ def render_chat(settings: dict):
                         st.error(f"❌ Failed to attach {uploaded_file.name}: {result['error']}")
     
     with img_col2:
-        # Clipboard paste option (instructions)
+        # Alternative: Drag and Drop instructions (more reliable than clipboard)
         st.markdown("""
-        **📋 Paste from Clipboard:**
+        **📋 Quick Upload:**
         
-        Use Ctrl+V (Cmd+V on Mac) in the chat input below to paste images directly!
+        - Drag & drop images to file picker →
+        - Or use keyboard shortcut ⌨️
+        - **Tip:** Save clipboard images first, then upload
+        """)
+        
+        st.info("""
+        💡 **Clipboard Workaround:**  
+        1. Copy image to clipboard (Ctrl+C)  
+        2. Paste to desktop/folder (Ctrl+V)  
+        3. Drag file to uploader above ← 
+        
+        *Full clipboard paste requires browser extension*
         """)
     
     with img_col3:

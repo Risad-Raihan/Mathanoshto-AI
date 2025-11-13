@@ -1,11 +1,13 @@
 """
-Authentication utilities for password hashing and API key encryption
+Authentication utilities for password hashing, API key encryption, and session management
 """
 import bcrypt
 from cryptography.fernet import Fernet
 from typing import Optional
 import os
 import base64
+import secrets
+import hashlib
 
 
 # Generate or load encryption key for API keys
@@ -95,4 +97,29 @@ def decrypt_api_key(encrypted_key: str) -> Optional[str]:
     except Exception as e:
         print(f"Failed to decrypt API key: {e}")
         return None
+
+
+def generate_session_token() -> str:
+    """
+    Generate a secure session token for 'Remember Me' functionality
+    
+    Returns:
+        A URL-safe random token
+    """
+    # Generate 32 bytes (256 bits) of random data
+    token = secrets.token_urlsafe(32)
+    return token
+
+
+def hash_session_token(token: str) -> str:
+    """
+    Hash a session token for storage
+    
+    Args:
+        token: Plain session token
+        
+    Returns:
+        Hashed token (SHA-256)
+    """
+    return hashlib.sha256(token.encode('utf-8')).hexdigest()
 

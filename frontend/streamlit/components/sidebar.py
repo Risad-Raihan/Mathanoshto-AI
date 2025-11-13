@@ -49,6 +49,7 @@ def render_sidebar() -> dict:
         with col1:
             if st.button("👤", key="profile_btn", use_container_width=True, help="Profile"):
                 st.session_state.show_profile = True
+                st.session_state.show_api_keys = False
                 st.session_state.show_file_manager = False
                 st.session_state.show_diagram_generator = False
                 st.session_state.show_memory_manager = False
@@ -57,6 +58,7 @@ def render_sidebar() -> dict:
         with col2:
             if st.button("📁", key="files_btn", use_container_width=True, help="Files"):
                 st.session_state.show_file_manager = True
+                st.session_state.show_api_keys = False
                 st.session_state.show_profile = False
                 st.session_state.show_diagram_generator = False
                 st.session_state.show_memory_manager = False
@@ -65,6 +67,7 @@ def render_sidebar() -> dict:
         with col3:
             if st.button("📊", key="diagram_btn", use_container_width=True, help="Diagrams"):
                 st.session_state.show_diagram_generator = True
+                st.session_state.show_api_keys = False
                 st.session_state.show_profile = False
                 st.session_state.show_file_manager = False
                 st.session_state.show_memory_manager = False
@@ -73,6 +76,7 @@ def render_sidebar() -> dict:
         with col4:
             if st.button("🖼️", key="gallery_btn", use_container_width=True, help="Image Gallery"):
                 st.session_state.show_image_gallery = True
+                st.session_state.show_api_keys = False
                 st.session_state.show_profile = False
                 st.session_state.show_file_manager = False
                 st.session_state.show_diagram_generator = False
@@ -83,6 +87,7 @@ def render_sidebar() -> dict:
         with col5:
             if st.button("🧠", key="memory_btn", use_container_width=True, help="Memory"):
                 st.session_state.show_memory_manager = True
+                st.session_state.show_api_keys = False
                 st.session_state.show_profile = False
                 st.session_state.show_file_manager = False
                 st.session_state.show_diagram_generator = False
@@ -91,14 +96,21 @@ def render_sidebar() -> dict:
         with col6:
             if st.button("💡", key="insights_btn", use_container_width=True, help="Insights"):
                 st.session_state.show_insights_panel = True
+                st.session_state.show_api_keys = False
                 st.session_state.show_profile = False
                 st.session_state.show_file_manager = False
                 st.session_state.show_diagram_generator = False
                 st.session_state.show_memory_manager = False
                 st.session_state.show_image_gallery = False
         with col7:
-            # Placeholder for future features
-            pass
+            if st.button("🔑", key="api_keys_btn", use_container_width=True, help="API Keys"):
+                st.session_state.show_api_keys = True
+                st.session_state.show_profile = False
+                st.session_state.show_file_manager = False
+                st.session_state.show_diagram_generator = False
+                st.session_state.show_memory_manager = False
+                st.session_state.show_insights_panel = False
+                st.session_state.show_image_gallery = False
         with col8:
             if st.button("🚪", key="logout_btn", use_container_width=True, help="Logout"):
                 logout()
@@ -196,12 +208,12 @@ def render_sidebar() -> dict:
         
         st.title("⚙️ Settings")
         
-        # Provider selection
-        available_providers = model_factory.get_available_providers()
+        # Provider selection - Get user-specific providers based on their API keys
+        available_providers = model_factory.get_user_available_providers(user_id)
         
         if not available_providers:
-            st.error("❌ No LLM providers available. Please check your API keys in .env file.")
-            st.info("Add OPENAI_API_KEY and/or GEMINI_API_KEY to your .env file")
+            st.error("❌ No LLM providers available. Please add your API keys.")
+            st.info("Go to 👤 Profile → API Keys to add your OpenAI, Gemini, or Anthropic API keys")
             return {}
         
         provider = st.selectbox(
@@ -210,18 +222,25 @@ def render_sidebar() -> dict:
             format_func=lambda x: x.upper()
         )
         
-        # Model selection (dynamic based on provider)
-        models = model_factory.get_models_for_provider(provider)
+        # Model selection (dynamic based on provider) - Use user-specific provider
+        models = model_factory.get_models_for_provider(provider, user_id=user_id)
         model_options = {m.display_name: m.name for m in models}
         
+        if not model_options:
+            st.error(f"No models available for {provider.upper()}")
+            st.info(f"Please ensure you have added your {provider.upper()} API key in Profile → API Keys")
+            return {}
+        
+        # Key ensures model selection resets when provider changes
         selected_display_name = st.selectbox(
             "Model",
-            list(model_options.keys())
+            list(model_options.keys()),
+            key=f"model_select_{provider}"
         )
-        model = model_options[selected_display_name]
+        model = model_options.get(selected_display_name, list(model_options.values())[0])
         
-        # Show model info
-        model_info = model_factory.get_model_info(provider, model)
+        # Show model info (user-specific)
+        model_info = model_factory.get_model_info(provider, model, user_id=user_id)
         if model_info:
             with st.expander("ℹ️ Model Info"):
                 st.write(f"**Description:** {model_info.description}")
@@ -301,8 +320,39 @@ def render_sidebar() -> dict:
         
         st.divider()
         
-        # Dark Mode Toggle
-        render_dark_mode_toggle()
+        # Theme Selector
+        st.subheader("🎨 Theme")
+        
+        theme_options = {
+            '🌊 Midnight Ocean': 'midnight_ocean',
+            '🍃 Mint Dream': 'mint_dream',
+            '☕ Warm Latte': 'warm_latte',
+            '⚡ Electric Lime': 'electric_lime',
+            '💎 Ruby Nights': 'ruby_nights',
+            '🌲 Forest Zen': 'forest_zen',
+            '🌑 Shadow Void': 'shadow_void',
+            '☀️ Daylight': 'daylight'
+        }
+        
+        # Get current theme from session state
+        current_theme = st.session_state.get('theme_name', 'midnight_ocean')
+        
+        # Find the display name for current theme
+        current_theme_display = [k for k, v in theme_options.items() if v == current_theme][0]
+        
+        selected_theme_display = st.selectbox(
+            "Choose your theme",
+            options=list(theme_options.keys()),
+            index=list(theme_options.keys()).index(current_theme_display),
+            key="theme_selector"
+        )
+        
+        selected_theme = theme_options[selected_theme_display]
+        
+        # Update theme if changed
+        if selected_theme != st.session_state.get('theme_name'):
+            st.session_state.theme_name = selected_theme
+            st.rerun()
         
         st.divider()
         
@@ -354,12 +404,35 @@ def render_sidebar() -> dict:
                         key=f"conv_{conv.id}",
                         use_container_width=True
                     ):
-                        # Load conversation
-                        from backend.core.chat_manager import ChatManager
-                        st.session_state.chat_manager = ChatManager(user_id=user_id, conversation_id=conv.id)
-                        st.session_state.current_conversation_id = conv.id
-                        st.session_state.messages = st.session_state.chat_manager.get_conversation_history()
-                        st.rerun()
+                        # Load conversation with error handling
+                        try:
+                            from backend.core.chat_manager import ChatManager
+                            # Create chat manager for this conversation
+                            chat_manager = ChatManager(user_id=user_id, conversation_id=conv.id)
+                            # Get conversation history
+                            messages = chat_manager.get_conversation_history()
+                            
+                            # Validate messages loaded successfully
+                            if not isinstance(messages, list):
+                                st.error("Failed to load conversation: Invalid message format")
+                                return
+                            
+                            # Update session state atomically
+                            st.session_state.chat_manager = chat_manager
+                            st.session_state.current_conversation_id = conv.id
+                            st.session_state.messages = messages
+                            
+                            # Clear any existing message input
+                            if 'user_message' in st.session_state:
+                                del st.session_state['user_message']
+                            
+                            # Rerun to reflect changes
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Failed to load conversation: {str(e)}")
+                            print(f"Error loading conversation {conv.id}: {e}")
+                            import traceback
+                            traceback.print_exc()
                     
                     # Display metadata
                     time_diff = datetime.now() - conv.created_at

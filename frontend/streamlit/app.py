@@ -27,11 +27,15 @@ import base64
 from backend.database.operations import init_database
 init_database()
 
+# Import session state manager FIRST
+from frontend.streamlit.utils.session_state import init_session_state, SessionStateManager
+
 # Import components
 from frontend.streamlit.components.sidebar import render_sidebar
 from frontend.streamlit.components.chat import render_chat
 from frontend.streamlit.components.login import require_login
 from frontend.streamlit.components.profile import render_user_profile
+from frontend.streamlit.components.api_keys import render_api_key_management
 from frontend.streamlit.components.file_manager import render_file_manager
 from frontend.streamlit.components.diagram_generator import render_diagram_generator
 from frontend.streamlit.components.memory_manager import render_memory_manager
@@ -55,19 +59,15 @@ bg_image_base64 = get_base64_image(bg_image_path)
 if 'dark_mode' not in st.session_state:
     st.session_state.dark_mode = True
 
-# Apply custom CSS with color palette system
+# Initialize session state (centralized, prevents race conditions)
+init_session_state()
+
+# Apply custom CSS with selected theme
+theme_name = SessionStateManager.get('theme_name', 'midnight_ocean')
 st.markdown(
-    get_custom_css(bg_image_base64, st.session_state.dark_mode),
+    get_custom_css(bg_image_base64, theme_name),
     unsafe_allow_html=True
 )
-
-# Session state initialization
-if 'chat_manager' not in st.session_state:
-    st.session_state.chat_manager = None
-if 'current_conversation_id' not in st.session_state:
-    st.session_state.current_conversation_id = None
-if 'messages' not in st.session_state:
-    st.session_state.messages = []
 
 # Check if user is logged in
 if not require_login():
@@ -84,6 +84,13 @@ if st.session_state.get('show_profile', False):
     # Add close button
     if st.button("← Back to Chat", key="close_profile"):
         st.session_state.show_profile = False
+        st.rerun()
+elif st.session_state.get('show_api_keys', False):
+    render_api_key_management()
+    
+    # Add close button
+    if st.button("← Back to Chat", key="close_api_keys"):
+        st.session_state.show_api_keys = False
         st.rerun()
 elif st.session_state.get('show_file_manager', False):
     render_file_manager()

@@ -146,20 +146,20 @@ class RAGConfiguration(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, unique=True, index=True)
     
-    # RAG settings
+    # RAG settings - Optimized for >=85% relevance accuracy
     is_enabled = Column(Boolean, default=True)
-    chunk_size = Column(Integer, default=1000)
-    chunk_overlap = Column(Integer, default=200)
+    chunk_size = Column(Integer, default=1500)  # Increased from 1000 for better context
+    chunk_overlap = Column(Integer, default=300)  # Increased from 200 for better continuity
     chunking_strategy = Column(String(50), default="recursive")
     
     # Retrieval settings
-    top_k = Column(Integer, default=5)  # Number of chunks to retrieve
-    min_similarity = Column(Float, default=0.5)  # Minimum similarity threshold
+    top_k = Column(Integer, default=7)  # Increased from 5 - Number of chunks to retrieve
+    min_similarity = Column(Float, default=0.4)  # Lowered from 0.5 to catch more relevant chunks
     retrieval_mode = Column(String(50), default="hybrid")  # semantic, keyword, hybrid
     
     # Hybrid search weights
-    semantic_weight = Column(Float, default=0.7)
-    keyword_weight = Column(Float, default=0.3)
+    semantic_weight = Column(Float, default=0.8)  # Increased from 0.7 for better semantic matching
+    keyword_weight = Column(Float, default=0.2)  # Adjusted from 0.3
     
     # Re-ranking
     use_reranking = Column(Boolean, default=True)
@@ -173,7 +173,7 @@ class RAGConfiguration(Base):
     use_compression = Column(Boolean, default=False)
     use_query_expansion = Column(Boolean, default=False)
     use_mmr = Column(Boolean, default=True)  # Maximum Marginal Relevance
-    mmr_lambda = Column(Float, default=0.5)  # Diversity vs relevance trade-off
+    mmr_lambda = Column(Float, default=0.7)  # Increased from 0.5 to prioritize relevance over diversity
     
     # File filtering
     selected_file_ids = Column(JSON, default=list)  # Empty = all files
