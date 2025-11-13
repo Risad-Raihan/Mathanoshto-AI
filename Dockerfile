@@ -58,13 +58,12 @@ WORKDIR /app
 # Copy application code
 COPY . .
 
-# Create necessary directories with proper permissions
+# Create necessary directories (cross-platform compatible)
 RUN mkdir -p data uploads logs \
     data/chroma_db \
     uploads/images \
     uploads/files \
-    uploads/search_images \
-    && chmod -R 755 data uploads logs
+    uploads/search_images
 
 # Expose Streamlit port
 EXPOSE 8501

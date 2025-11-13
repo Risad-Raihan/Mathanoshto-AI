@@ -11,6 +11,13 @@
 - 8GB+ RAM recommended
 - Internet connection
 
+### ✅ Cross-Platform Support
+**Works on:** Linux, macOS, Windows  
+Docker images are platform-independent. Tested on:
+- ✅ **Linux** (Arch, Ubuntu, Debian)
+- ✅ **macOS** (Intel & Apple Silicon)
+- ✅ **Windows** (with Docker Desktop)
+
 ### 1️⃣ Start the Application
 ```bash
 docker-compose up -d
@@ -20,11 +27,17 @@ docker-compose up -d
 Open your browser: **http://localhost:8501**
 
 ### 3️⃣ First-Time Setup
-1. **Login** with default credentials:
-   - Username: `risad`
-   - Password: `risad123`
+1. **Sign Up** - Create your account:
+   - Click "✨ Sign Up" tab
+   - Enter your username, email, and password
+   - Click "Create Account"
 
-2. **Add Your API Keys** (Click **👤 Profile** → **API Keys**):
+2. **Sign In** - Login with your credentials:
+   - Switch to "🔐 Sign In" tab
+   - Enter your credentials
+   - Check "Remember me" to stay logged in
+
+3. **Add Your API Keys** (Click **👤 Profile** → **API Keys**):
    - **OpenAI**: Get from https://platform.openai.com/api-keys
    - **Google Gemini**: Get from https://aistudio.google.com/app/apikey
    - **Anthropic**: Get from https://console.anthropic.com/

@@ -8,7 +8,7 @@ from backend.database.user_operations import UserDB, UserSessionDB
 
 def render_login_page():
     """
-    Render a simple, clean login page with Remember Me functionality
+    Render login/signup page with tabs and Remember Me functionality
     """
     # Initialize cookie manager
     cookie_manager = stx.CookieManager()
@@ -39,60 +39,144 @@ def render_login_page():
         </div>
         """, unsafe_allow_html=True)
         
-        # Login form
-        with st.form("login_form", clear_on_submit=False):
-            username = st.text_input(
-                "Username",
-                placeholder="Enter your username",
-                key="login_username"
-            )
-            
-            password = st.text_input(
-                "Password",
-                type="password",
-                placeholder="Enter your password",
-                key="login_password"
-            )
-            
-            # Remember Me checkbox
-            remember_me = st.checkbox(
-                "Remember me for 30 days",
-                value=True,
-                key="remember_me",
-                help="Stay logged in even after closing the browser"
-            )
-            
-            st.markdown("<br>", unsafe_allow_html=True)
-            
-            submitted = st.form_submit_button(
-                "🔐 Sign In",
-                use_container_width=True
-            )
-            
-            if submitted:
-                if not username or not password:
-                    st.error("Please enter both username and password")
-                else:
-                    # Authenticate user
-                    user = UserDB.authenticate_user(username, password)
-                    
-                    if user:
-                        # Store user info in session state
-                        _set_user_session_state(user)
-                        
-                        # Create session token if Remember Me is checked
-                        if remember_me:
-                            try:
-                                plain_token, _ = UserSessionDB.create_session(user.id)
-                                # Store token in cookie (30 days)
-                                cookie_manager.set('session_token', plain_token, max_age=30*24*60*60)
-                            except Exception as e:
-                                print(f"Failed to create session: {e}")
-                        
-                        st.success(f"✅ Welcome back, {user.full_name or user.username}!")
-                        st.rerun()
+        # Tabs for Login and Sign Up
+        tab1, tab2 = st.tabs(["🔐 Sign In", "✨ Sign Up"])
+        
+        # ===== LOGIN TAB =====
+        with tab1:
+            with st.form("login_form", clear_on_submit=False):
+                username = st.text_input(
+                    "Username",
+                    placeholder="Enter your username",
+                    key="login_username"
+                )
+                
+                password = st.text_input(
+                    "Password",
+                    type="password",
+                    placeholder="Enter your password",
+                    key="login_password"
+                )
+                
+                # Remember Me checkbox
+                remember_me = st.checkbox(
+                    "Remember me for 30 days",
+                    value=True,
+                    key="remember_me",
+                    help="Stay logged in even after closing the browser"
+                )
+                
+                st.markdown("<br>", unsafe_allow_html=True)
+                
+                submitted = st.form_submit_button(
+                    "🔐 Sign In",
+                    use_container_width=True,
+                    type="primary"
+                )
+                
+                if submitted:
+                    if not username or not password:
+                        st.error("Please enter both username and password")
                     else:
-                        st.error("❌ Invalid username or password")
+                        # Authenticate user
+                        user = UserDB.authenticate_user(username, password)
+                        
+                        if user:
+                            # Store user info in session state
+                            _set_user_session_state(user)
+                            
+                            # Create session token if Remember Me is checked
+                            if remember_me:
+                                try:
+                                    plain_token, _ = UserSessionDB.create_session(user.id)
+                                    # Store token in cookie (30 days)
+                                    cookie_manager.set('session_token', plain_token, max_age=30*24*60*60)
+                                except Exception as e:
+                                    print(f"Failed to create session: {e}")
+                            
+                            st.success(f"✅ Welcome back, {user.full_name or user.username}!")
+                            st.rerun()
+                        else:
+                            st.error("❌ Invalid username or password")
+        
+        # ===== SIGNUP TAB =====
+        with tab2:
+            st.info("👋 Create your account to get started!")
+            
+            with st.form("signup_form", clear_on_submit=True):
+                new_username = st.text_input(
+                    "Username *",
+                    placeholder="Choose a username",
+                    key="signup_username",
+                    help="Username must be unique"
+                )
+                
+                new_email = st.text_input(
+                    "Email *",
+                    placeholder="your@email.com",
+                    key="signup_email"
+                )
+                
+                new_full_name = st.text_input(
+                    "Full Name",
+                    placeholder="Your full name (optional)",
+                    key="signup_full_name"
+                )
+                
+                col_a, col_b = st.columns(2)
+                
+                with col_a:
+                    new_password = st.text_input(
+                        "Password *",
+                        type="password",
+                        placeholder="Create a strong password",
+                        key="signup_password",
+                        help="Minimum 6 characters"
+                    )
+                
+                with col_b:
+                    confirm_password = st.text_input(
+                        "Confirm Password *",
+                        type="password",
+                        placeholder="Re-enter password",
+                        key="signup_confirm_password"
+                    )
+                
+                st.markdown("<br>", unsafe_allow_html=True)
+                
+                signup_submitted = st.form_submit_button(
+                    "✨ Create Account",
+                    use_container_width=True,
+                    type="primary"
+                )
+                
+                if signup_submitted:
+                    # Validation
+                    if not new_username or not new_email or not new_password:
+                        st.error("❌ Please fill in all required fields")
+                    elif len(new_password) < 6:
+                        st.error("❌ Password must be at least 6 characters long")
+                    elif new_password != confirm_password:
+                        st.error("❌ Passwords do not match")
+                    elif '@' not in new_email:
+                        st.error("❌ Please enter a valid email address")
+                    else:
+                        # Try to create user
+                        try:
+                            new_user = UserDB.create_user(
+                                username=new_username,
+                                email=new_email,
+                                password=new_password,
+                                full_name=new_full_name if new_full_name else None
+                            )
+                            
+                            if new_user:
+                                st.success(f"✅ Account created! Welcome, {new_user.full_name or new_user.username}!")
+                                st.info("👉 Please switch to the **Sign In** tab to login")
+                            else:
+                                st.error("❌ Username or email already exists. Please choose different credentials.")
+                        except Exception as e:
+                            st.error(f"❌ Error creating account: {str(e)}")
         
         # Team info
         st.markdown("<br><br>", unsafe_allow_html=True)

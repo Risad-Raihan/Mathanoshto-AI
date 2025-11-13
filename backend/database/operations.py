@@ -41,6 +41,7 @@ def init_database():
     """Initialize database tables"""
     Base.metadata.create_all(bind=engine)
     print("✓ Database initialized")
+    print("ℹ️  First-time users: Please sign up to create an account")
 
 def get_db() -> Session:
     """Get database session"""
