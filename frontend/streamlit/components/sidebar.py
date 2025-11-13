@@ -427,7 +427,7 @@ def render_sidebar() -> dict:
                                 del st.session_state['user_message']
                             
                             # Rerun to reflect changes
-                            st.rerun()
+                        st.rerun()
                         except Exception as e:
                             st.error(f"Failed to load conversation: {str(e)}")
                             print(f"Error loading conversation {conv.id}: {e}")
