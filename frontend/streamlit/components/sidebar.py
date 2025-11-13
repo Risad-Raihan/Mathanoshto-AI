@@ -316,7 +316,7 @@ def render_sidebar() -> dict:
         
         # API Key Management
         with st.expander("🔑 API Keys", expanded=False):
-            render_api_key_management()
+            render_api_key_management(location="sidebar")
         
         st.divider()
         

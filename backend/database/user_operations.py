@@ -155,7 +155,7 @@ class UserAPIKeyDB:
         base_url: Optional[str] = None
     ) -> UserAPIKey:
         """
-        Add or update an API key for a user
+        Add a new API key for a user (allows duplicates)
         
         Args:
             user_id: User ID
@@ -169,37 +169,20 @@ class UserAPIKeyDB:
         """
         db = get_db()
         try:
-            # Check if key already exists
-            existing = db.query(UserAPIKey).filter(
-                UserAPIKey.user_id == user_id,
-                UserAPIKey.provider == provider
-            ).first()
-            
             encrypted = encrypt_api_key(api_key)
             
-            if existing:
-                # Update existing key
-                existing.encrypted_key = encrypted
-                existing.key_name = key_name
-                existing.base_url = base_url
-                existing.updated_at = datetime.utcnow()
-                existing.is_active = True
-                db.commit()
-                db.refresh(existing)
-                return existing
-            else:
-                # Create new key
-                api_key_obj = UserAPIKey(
-                    user_id=user_id,
-                    provider=provider,
-                    key_name=key_name,
-                    encrypted_key=encrypted,
-                    base_url=base_url
-                )
-                db.add(api_key_obj)
-                db.commit()
-                db.refresh(api_key_obj)
-                return api_key_obj
+            # Always create a new key (allow duplicates)
+            api_key_obj = UserAPIKey(
+                user_id=user_id,
+                provider=provider,
+                key_name=key_name,
+                encrypted_key=encrypted,
+                base_url=base_url
+            )
+            db.add(api_key_obj)
+            db.commit()
+            db.refresh(api_key_obj)
+            return api_key_obj
         finally:
             db.close()
     
@@ -293,7 +276,7 @@ class UserAPIKeyDB:
     
     @staticmethod
     def delete_api_key(user_id: int, provider: str):
-        """Delete an API key"""
+        """Delete an API key by user_id and provider (deletes first match)"""
         db = get_db()
         try:
             key_obj = db.query(UserAPIKey).filter(
@@ -304,6 +287,31 @@ class UserAPIKeyDB:
             if key_obj:
                 db.delete(key_obj)
                 db.commit()
+        finally:
+            db.close()
+    
+    @staticmethod
+    def delete_api_key_by_id(key_id: int):
+        """Delete an API key by its ID"""
+        db = get_db()
+        try:
+            key_obj = db.query(UserAPIKey).filter(
+                UserAPIKey.id == key_id
+            ).first()
+            
+            if key_obj:
+                db.delete(key_obj)
+                db.commit()
+        finally:
+            db.close()
+    
+    @staticmethod
+    def delete_all_api_keys():
+        """Delete all API keys from the database"""
+        db = get_db()
+        try:
+            db.query(UserAPIKey).delete()
+            db.commit()
         finally:
             db.close()
     
