@@ -33,6 +33,8 @@ class SessionStateManager:
         'show_image_gallery': False,
         'editing_message': None,
         'regenerating_message': None,
+        'theme_name': 'midnight_ocean',  # Default theme
+        'dark_mode': True,
         
         # Agent
         'selected_agent_id': None,

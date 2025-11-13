@@ -49,6 +49,7 @@ def render_sidebar() -> dict:
         with col1:
             if st.button("👤", key="profile_btn", use_container_width=True, help="Profile"):
                 st.session_state.show_profile = True
+                st.session_state.show_api_keys = False
                 st.session_state.show_file_manager = False
                 st.session_state.show_diagram_generator = False
                 st.session_state.show_memory_manager = False
@@ -57,6 +58,7 @@ def render_sidebar() -> dict:
         with col2:
             if st.button("📁", key="files_btn", use_container_width=True, help="Files"):
                 st.session_state.show_file_manager = True
+                st.session_state.show_api_keys = False
                 st.session_state.show_profile = False
                 st.session_state.show_diagram_generator = False
                 st.session_state.show_memory_manager = False
@@ -65,6 +67,7 @@ def render_sidebar() -> dict:
         with col3:
             if st.button("📊", key="diagram_btn", use_container_width=True, help="Diagrams"):
                 st.session_state.show_diagram_generator = True
+                st.session_state.show_api_keys = False
                 st.session_state.show_profile = False
                 st.session_state.show_file_manager = False
                 st.session_state.show_memory_manager = False
@@ -73,6 +76,7 @@ def render_sidebar() -> dict:
         with col4:
             if st.button("🖼️", key="gallery_btn", use_container_width=True, help="Image Gallery"):
                 st.session_state.show_image_gallery = True
+                st.session_state.show_api_keys = False
                 st.session_state.show_profile = False
                 st.session_state.show_file_manager = False
                 st.session_state.show_diagram_generator = False
@@ -83,6 +87,7 @@ def render_sidebar() -> dict:
         with col5:
             if st.button("🧠", key="memory_btn", use_container_width=True, help="Memory"):
                 st.session_state.show_memory_manager = True
+                st.session_state.show_api_keys = False
                 st.session_state.show_profile = False
                 st.session_state.show_file_manager = False
                 st.session_state.show_diagram_generator = False
@@ -91,14 +96,21 @@ def render_sidebar() -> dict:
         with col6:
             if st.button("💡", key="insights_btn", use_container_width=True, help="Insights"):
                 st.session_state.show_insights_panel = True
+                st.session_state.show_api_keys = False
                 st.session_state.show_profile = False
                 st.session_state.show_file_manager = False
                 st.session_state.show_diagram_generator = False
                 st.session_state.show_memory_manager = False
                 st.session_state.show_image_gallery = False
         with col7:
-            # Placeholder for future features
-            pass
+            if st.button("🔑", key="api_keys_btn", use_container_width=True, help="API Keys"):
+                st.session_state.show_api_keys = True
+                st.session_state.show_profile = False
+                st.session_state.show_file_manager = False
+                st.session_state.show_diagram_generator = False
+                st.session_state.show_memory_manager = False
+                st.session_state.show_insights_panel = False
+                st.session_state.show_image_gallery = False
         with col8:
             if st.button("🚪", key="logout_btn", use_container_width=True, help="Logout"):
                 logout()
@@ -308,8 +320,39 @@ def render_sidebar() -> dict:
         
         st.divider()
         
-        # Dark Mode Toggle
-        render_dark_mode_toggle()
+        # Theme Selector
+        st.subheader("🎨 Theme")
+        
+        theme_options = {
+            '🌊 Midnight Ocean': 'midnight_ocean',
+            '🍃 Mint Dream': 'mint_dream',
+            '☕ Warm Latte': 'warm_latte',
+            '⚡ Electric Lime': 'electric_lime',
+            '💎 Ruby Nights': 'ruby_nights',
+            '🌲 Forest Zen': 'forest_zen',
+            '🌑 Shadow Void': 'shadow_void',
+            '☀️ Daylight': 'daylight'
+        }
+        
+        # Get current theme from session state
+        current_theme = st.session_state.get('theme_name', 'midnight_ocean')
+        
+        # Find the display name for current theme
+        current_theme_display = [k for k, v in theme_options.items() if v == current_theme][0]
+        
+        selected_theme_display = st.selectbox(
+            "Choose your theme",
+            options=list(theme_options.keys()),
+            index=list(theme_options.keys()).index(current_theme_display),
+            key="theme_selector"
+        )
+        
+        selected_theme = theme_options[selected_theme_display]
+        
+        # Update theme if changed
+        if selected_theme != st.session_state.get('theme_name'):
+            st.session_state.theme_name = selected_theme
+            st.rerun()
         
         st.divider()
         
