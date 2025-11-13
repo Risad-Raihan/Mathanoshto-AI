@@ -226,7 +226,7 @@ def get_custom_css(bg_image_base64: str = None, theme_name: str = 'midnight_ocea
     }}
     """
         else:
-            bg_css = f"""
+    bg_css = f"""
     /* Background image for main chat area */
     .stApp {{
         background: linear-gradient(rgba(10, 10, 10, 0.85), rgba(10, 10, 10, 0.92)), 
@@ -363,11 +363,31 @@ def get_custom_css(bg_image_base64: str = None, theme_name: str = 'midnight_ocea
         border-radius: 8px !important;
         transition: all 0.2s ease !important;
         color: var(--color-text-primary) !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+        position: relative !important;
+        z-index: 1 !important;
     }}
     
     [data-testid="stSidebar"] .stButton button:hover {{
         transform: translateY(-2px) !important;
         box-shadow: 0 4px 12px var(--neon-glow) !important;
+    }}
+    
+    /* Fix button container overflow */
+    [data-testid="stSidebar"] .stButton {{
+        overflow: hidden !important;
+    }}
+    
+    /* Ensure columns don't overlap */
+    [data-testid="stSidebar"] .row-widget {{
+        overflow: visible !important;
+    }}
+    
+    [data-testid="stSidebar"] [data-testid="column"] {{
+        overflow: visible !important;
+        padding: 0 0.2rem !important;
     }}
     
     /* ============================================
@@ -916,9 +936,48 @@ def get_custom_css(bg_image_base64: str = None, theme_name: str = 'midnight_ocea
         animation: fadeIn var(--transition-normal);
     }}
     
-    /* Hide Streamlit branding */
+    /* Hide Streamlit branding and debug elements */
     #MainMenu {{visibility: hidden;}}
     footer {{visibility: hidden;}}
+    
+    /* Hide any debug or key text */
+    [data-testid] *[class*="key_"] {{
+        overflow: hidden !important;
+    }}
+    
+    /* Prevent text overflow globally */
+    * {{
+        overflow-wrap: break-word !important;
+        word-wrap: break-word !important;
+    }}
+    
+    /* Ensure proper text clipping */
+    .element-container {{
+        overflow: hidden !important;
+    }}
+    
+    /* Fix columns spacing to prevent overlap */
+    [data-testid="column"] {{
+        padding-left: 0.25rem !important;
+        padding-right: 0.25rem !important;
+        min-width: 0 !important;
+    }}
+    
+    /* Ensure tabs don't overflow */
+    .stTabs {{
+        overflow: hidden !important;
+    }}
+    
+    .stTabs [data-baseweb="tab-list"] {{
+        overflow-x: auto !important;
+        flex-wrap: nowrap !important;
+    }}
+    
+    .stTabs [data-baseweb="tab"] {{
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }}
     
     /* ============================================
        SPECIAL: THEME SELECTOR STYLING

@@ -22,7 +22,7 @@ def render_api_key_management():
     # Show status of existing keys
     if existing_keys:
         st.markdown("### 📋 Your API Keys:")
-        for key in existing_keys:
+        for idx, key in enumerate(existing_keys):
             if key['is_active']:
                 col1, col2, col3 = st.columns([3, 2, 1])
                 with col1:
@@ -30,7 +30,7 @@ def render_api_key_management():
                 with col2:
                     st.caption(f"Added: {key['created_at'].strftime('%Y-%m-%d')}")
                 with col3:
-                    if st.button("🗑️", key=f"delete_{key['provider']}", help="Delete key"):
+                    if st.button("🗑️", key=f"delete_{key['provider']}_{idx}", help="Delete key"):
                         UserAPIKeyDB.delete_api_key(user_id, key['provider'])
                         st.success(f"Deleted {key['provider']} API key")
                         st.rerun()
