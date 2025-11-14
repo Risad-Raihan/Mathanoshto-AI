@@ -226,7 +226,7 @@ def get_custom_css(bg_image_base64: str = None, theme_name: str = 'midnight_ocea
     }}
     """
         else:
-    bg_css = f"""
+            bg_css = f"""
     /* Background image for main chat area */
     .stApp {{
         background: linear-gradient(rgba(10, 10, 10, 0.85), rgba(10, 10, 10, 0.92)), 

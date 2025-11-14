@@ -6,9 +6,12 @@ import streamlit as st
 from backend.database.user_operations import UserAPIKeyDB
 
 
-def render_api_key_management():
+def render_api_key_management(location: str = "main"):
     """
     Render API key management interface for the logged-in user
+    
+    Args:
+        location: Location identifier ("main" or "sidebar") to ensure unique form keys
     """
     user_id = st.session_state.get('user_id')
     
@@ -22,16 +25,32 @@ def render_api_key_management():
     # Show status of existing keys
     if existing_keys:
         st.markdown("### 📋 Your API Keys:")
+        # Group keys by provider to show duplicate indicators
+        provider_counts = {}
+        for key in existing_keys:
+            if key['is_active']:
+                provider_counts[key['provider']] = provider_counts.get(key['provider'], 0) + 1
+        
+        provider_indices = {}
         for idx, key in enumerate(existing_keys):
             if key['is_active']:
                 col1, col2, col3 = st.columns([3, 2, 1])
                 with col1:
-                    st.markdown(f"**{key['provider'].upper()}**")
+                    provider = key['provider'].upper()
+                    if provider_counts.get(key['provider'], 0) > 1:
+                        # Track which duplicate this is
+                        provider_indices[key['provider']] = provider_indices.get(key['provider'], 0) + 1
+                        st.markdown(f"**{provider}** (Key #{provider_indices[key['provider']]})")
+                        st.caption(f"ID: {key['id']}")
+                    else:
+                        st.markdown(f"**{provider}**")
                 with col2:
                     st.caption(f"Added: {key['created_at'].strftime('%Y-%m-%d')}")
                 with col3:
-                    if st.button("🗑️", key=f"delete_{key['provider']}_{idx}", help="Delete key"):
-                        UserAPIKeyDB.delete_api_key(user_id, key['provider'])
+                    # Use unique key with ID and location to avoid conflicts
+                    delete_key = f"delete_{key['id']}_{user_id}_{location}"
+                    if st.button("🗑️", key=delete_key, help="Delete this API key"):
+                        UserAPIKeyDB.delete_api_key_by_id(key['id'])
                         st.success(f"Deleted {key['provider']} API key")
                         st.rerun()
         st.divider()
@@ -39,7 +58,9 @@ def render_api_key_management():
     # Add new API key form
     st.markdown("### ➕ Add New API Key")
     
-    with st.form("add_api_key_form", clear_on_submit=True):
+    # Make form key unique by including user_id and location
+    form_key = f"add_api_key_form_{user_id}_{location}"
+    with st.form(form_key, clear_on_submit=True):
         provider = st.selectbox(
             "Provider",
             options=['openai', 'gemini', 'anthropic', 'tavily', 'firecrawl', 'mathpix'],

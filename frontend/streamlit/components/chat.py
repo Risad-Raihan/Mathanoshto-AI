@@ -709,7 +709,8 @@ def render_chat(settings: dict):
                 use_web_scraper=settings.get("use_web_scraper", False),
                 use_youtube=settings.get("use_youtube", False),
                 use_data_analyzer=settings.get("use_data_analyzer", False),
-                use_image_generator=settings.get("use_image_generator", False)
+                use_image_generator=settings.get("use_image_generator", False),
+                user_id=user_id
             )
             
             # Show if tools are enabled
