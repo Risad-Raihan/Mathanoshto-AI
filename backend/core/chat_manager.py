@@ -202,7 +202,7 @@ class ChatManager:
                     # Execute the tool
                     result = None
                     if function_name == "web_search":
-                        tool = get_tavily_tool()
+                        tool = get_tavily_tool(user_id=self.user_id)
                         result = tool.execute(function_args)
                     elif function_name in ["scrape_url", "monitor_url"]:
                         from backend.tools.scraper_tool import execute_scraper_tool

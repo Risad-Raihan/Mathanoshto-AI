@@ -6,23 +6,25 @@ import extra_streamlit_components as stx
 from backend.database.user_operations import UserDB, UserSessionDB
 
 
+def get_cookie_manager():
+    """
+    Get or create CookieManager instance (cached in session state to avoid duplicate keys)
+    
+    Returns:
+        CookieManager instance
+    """
+    if 'cookie_manager' not in st.session_state:
+        st.session_state.cookie_manager = stx.CookieManager(key="cookie_manager_init")
+    return st.session_state.cookie_manager
+
+
 def render_login_page():
     """
     Render login/signup page with tabs and Remember Me functionality
+    Note: Auto-login is now handled in require_login() to avoid duplicate checks
     """
-    # Initialize cookie manager
-    cookie_manager = stx.CookieManager()
-    
-    # Check for existing session token in cookies
-    if not st.session_state.get('logged_in', False):
-        session_token = cookie_manager.get('session_token')
-        if session_token:
-            # Try to auto-login with session token
-            user = UserSessionDB.validate_session(session_token)
-            if user:
-                # Auto-login successful
-                _set_user_session_state(user)
-                st.rerun()
+    # Get cookie manager (cached instance)
+    cookie_manager = get_cookie_manager()
     
     # Center the login form
     col1, col2, col3 = st.columns([1, 2, 1])
@@ -205,8 +207,8 @@ def _set_user_session_state(user):
 
 def logout():
     """Logout user and clear session"""
-    # Get cookie manager
-    cookie_manager = stx.CookieManager()
+    # Get cookie manager (cached instance)
+    cookie_manager = get_cookie_manager()
     
     # Delete session token from database
     session_token = cookie_manager.get('session_token')
@@ -236,12 +238,29 @@ def logout():
 def require_login():
     """
     Check if user is logged in, show login page if not
+    Also checks for Remember Me cookie and auto-logs in if valid
     
     Returns:
         bool: True if logged in, False otherwise
     """
-    if not st.session_state.get('logged_in', False):
-        render_login_page()
-        return False
-    return True
+    # First check if already logged in via session state
+    if st.session_state.get('logged_in', False):
+        return True
+    
+    # If not logged in, check for Remember Me cookie
+    cookie_manager = get_cookie_manager()
+    session_token = cookie_manager.get('session_token')
+    
+    if session_token:
+        # Try to auto-login with session token
+        user = UserSessionDB.validate_session(session_token)
+        if user:
+            # Auto-login successful
+            _set_user_session_state(user)
+            st.rerun()
+            return True
+    
+    # No valid session, show login page
+    render_login_page()
+    return False
 

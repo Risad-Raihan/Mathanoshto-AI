@@ -236,18 +236,29 @@ class TavilySearchTool:
         return self.search(query, max_results)
 
 
-# Singleton instance
-_tavily_tool = None
+# Cache instances per user_id
+_tavily_tools = {}
 
-def get_tavily_tool() -> TavilySearchTool:
-    """Get or create Tavily tool instance"""
-    global _tavily_tool
-    if _tavily_tool is None:
-        _tavily_tool = TavilySearchTool()
-    return _tavily_tool
+def get_tavily_tool(user_id: Optional[int] = None) -> TavilySearchTool:
+    """
+    Get or create Tavily tool instance for a specific user
+    
+    Args:
+        user_id: User ID to load API key from database. If None, uses settings.
+    
+    Returns:
+        TavilySearchTool instance
+    """
+    # Use user_id as cache key, or 'default' if None
+    cache_key = user_id if user_id is not None else 'default'
+    
+    if cache_key not in _tavily_tools:
+        _tavily_tools[cache_key] = TavilySearchTool(user_id=user_id)
+    
+    return _tavily_tools[cache_key]
 
 
-def get_enabled_tools(use_tavily: bool = False, use_web_scraper: bool = False, use_youtube: bool = False, use_data_analyzer: bool = False, use_image_generator: bool = False) -> List[Dict]:
+def get_enabled_tools(use_tavily: bool = False, use_web_scraper: bool = False, use_youtube: bool = False, use_data_analyzer: bool = False, use_image_generator: bool = False, user_id: Optional[int] = None) -> List[Dict]:
     """
     Get list of enabled tool definitions
     
@@ -257,7 +268,8 @@ def get_enabled_tools(use_tavily: bool = False, use_web_scraper: bool = False, u
         use_youtube: Whether to enable YouTube summarizer
         use_data_analyzer: Whether to enable data analyzer
         use_image_generator: Whether to enable AI image generation
-        
+        user_id: User ID to load API keys from database
+    
     Returns:
         List of tool definitions for LLM
     """
@@ -265,7 +277,7 @@ def get_enabled_tools(use_tavily: bool = False, use_web_scraper: bool = False, u
     
     if use_tavily:
         try:
-            tool = get_tavily_tool()
+            tool = get_tavily_tool(user_id=user_id)
             tools.append(tool.get_tool_definition())
         except ValueError as e:
             # Tavily not configured, skip
