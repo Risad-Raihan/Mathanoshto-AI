@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from backend.database.models import User, UserAPIKey, UserSession
 from backend.database.operations import get_db
 from backend.auth import hash_password, verify_password, encrypt_api_key, decrypt_api_key, generate_session_token, hash_session_token
+from backend.auth.firebase_auth import verify_firebase_token, get_firebase_user
 
 
 class UserDB:
@@ -67,6 +68,32 @@ class UserDB:
         db = get_db()
         try:
             user = db.query(User).filter(User.id == user_id).first()
+            if user:
+                db.refresh(user)
+                db.expunge(user)
+            return user
+        finally:
+            db.close()
+    
+    @staticmethod
+    def get_user_by_firebase_uid(firebase_uid: str) -> Optional[User]:
+        """Get user by Firebase UID"""
+        db = get_db()
+        try:
+            user = db.query(User).filter(User.firebase_uid == firebase_uid).first()
+            if user:
+                db.refresh(user)
+                db.expunge(user)
+            return user
+        finally:
+            db.close()
+    
+    @staticmethod
+    def get_user_by_email(email: str) -> Optional[User]:
+        """Get user by email address"""
+        db = get_db()
+        try:
+            user = db.query(User).filter(User.email == email).first()
             if user:
                 db.refresh(user)
                 db.expunge(user)
@@ -141,6 +168,94 @@ class UserDB:
             return db.query(User).all()
         finally:
             db.close()
+    
+    @staticmethod
+    def create_or_get_user_from_firebase(firebase_token: str) -> Optional[User]:
+        """
+        Create or get user from Firebase ID token
+        This is the main method for Firebase authentication
+        
+        Args:
+            firebase_token: Firebase ID token from client
+            
+        Returns:
+            User object if successful, None otherwise
+        """
+        # Verify Firebase token
+        firebase_user_info = verify_firebase_token(firebase_token)
+        if not firebase_user_info:
+            return None
+        
+        firebase_uid = firebase_user_info['uid']
+        email = firebase_user_info.get('email')
+        name = firebase_user_info.get('name')
+        
+        db = get_db()
+        try:
+            # Check if user already exists with this Firebase UID
+            user = db.query(User).filter(User.firebase_uid == firebase_uid).first()
+            
+            if user:
+                # User exists, update last login and refresh info
+                user.last_login = datetime.utcnow()
+                # Update email/name if changed in Firebase
+                if email and user.email != email:
+                    user.email = email
+                if name and user.full_name != name:
+                    user.full_name = name
+                db.commit()
+                db.refresh(user)
+                db.expunge(user)
+                return user
+            
+            # Check if user exists with this email (for migration from old system)
+            if email:
+                user = db.query(User).filter(User.email == email).first()
+                if user:
+                    # Link existing user to Firebase
+                    user.firebase_uid = firebase_uid
+                    if name and not user.full_name:
+                        user.full_name = name
+                    user.last_login = datetime.utcnow()
+                    db.commit()
+                    db.refresh(user)
+                    db.expunge(user)
+                    return user
+            
+            # Create new user linked to Firebase
+            user = User(
+                firebase_uid=firebase_uid,
+                email=email,
+                full_name=name,
+                username=email.split('@')[0] if email else None,  # Use email prefix as username
+                password_hash=None,  # No password for Firebase users
+                last_login=datetime.utcnow()
+            )
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+            db.expunge(user)
+            return user
+            
+        except Exception as e:
+            db.rollback()
+            print(f"Error creating/getting user from Firebase: {e}")
+            return None
+        finally:
+            db.close()
+    
+    @staticmethod
+    def authenticate_with_firebase(firebase_token: str) -> Optional[User]:
+        """
+        Authenticate user with Firebase token (alias for create_or_get_user_from_firebase)
+        
+        Args:
+            firebase_token: Firebase ID token
+            
+        Returns:
+            User object if authentication succeeds, None otherwise
+        """
+        return UserDB.create_or_get_user_from_firebase(firebase_token)
 
 
 class UserAPIKeyDB:

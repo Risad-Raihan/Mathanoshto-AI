@@ -27,6 +27,10 @@ import base64
 from backend.database.operations import init_database
 init_database()
 
+# Initialize Firebase (if enabled)
+from backend.auth.firebase_auth import initialize_firebase
+initialize_firebase()
+
 # Import session state manager FIRST
 from frontend.streamlit.utils.session_state import init_session_state, SessionStateManager
 

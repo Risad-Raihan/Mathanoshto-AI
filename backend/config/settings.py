@@ -17,7 +17,12 @@ class Settings(BaseSettings):
     anthropic_api_key: Optional[str] = None
     
     # Database
-    database_url: str = "sqlite:///./chat_history.db"
+    database_url: str = "sqlite:///./data/chat_history.db"
+    
+    # Firebase Configuration
+    firebase_credentials_path: Optional[str] = None  # Path to Firebase service account JSON
+    firebase_project_id: Optional[str] = None  # Firebase project ID (alternative to credentials file)
+    use_firebase_auth: bool = True  # Enable Firebase Authentication (default: True)
     
     # Application
     app_name: str = "Mathanoshto AI"
