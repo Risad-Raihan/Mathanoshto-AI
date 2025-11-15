@@ -5,6 +5,7 @@ from sqlalchemy import create_engine, desc
 from sqlalchemy.orm import sessionmaker, Session
 from typing import List, Optional
 from datetime import datetime
+from pathlib import Path
 
 from backend.database.models import Base, Conversation, Message, Attachment, ToolCall, UserSession
 from backend.config.settings import settings
@@ -39,6 +40,13 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def init_database():
     """Initialize database tables"""
+    # Ensure data directory exists for SQLite database
+    db_path = settings.database_url.replace("sqlite:///", "")
+    if db_path.startswith("./"):
+        db_path = db_path[2:]  # Remove ./ prefix
+    db_file = Path(db_path)
+    db_file.parent.mkdir(parents=True, exist_ok=True)
+    
     Base.metadata.create_all(bind=engine)
     print("✓ Database initialized")
     print("ℹ️  First-time users: Please sign up to create an account")

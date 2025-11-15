@@ -35,6 +35,11 @@ logs/
 *.sqlite
 *.sqlite3
 
+# Firebase credentials (NEVER commit these!)
+firebase-credentials.json
+**/firebase-credentials.json
+*.firebase-credentials.json
+
 # OS
 .DS_Store
 Thumbs.db

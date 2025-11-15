@@ -16,10 +16,11 @@ class User(Base):
     __tablename__ = 'users'
     
     id = Column(Integer, primary_key=True)
-    username = Column(String(50), unique=True, nullable=False)
-    password_hash = Column(String(255), nullable=False)
+    username = Column(String(50), unique=True, nullable=True)  # Made nullable for Firebase users
+    password_hash = Column(String(255), nullable=True)  # Made nullable for Firebase users
+    firebase_uid = Column(String(128), unique=True, nullable=True, index=True)  # Firebase user ID
     full_name = Column(String(100), nullable=True)
-    email = Column(String(100), nullable=True)
+    email = Column(String(100), nullable=True, unique=True, index=True)  # Made unique for Firebase
     
     # User preferences
     default_provider = Column(String(50), nullable=True, default='openai')
