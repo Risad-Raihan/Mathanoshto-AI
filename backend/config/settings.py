@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     # Firebase Configuration
     firebase_credentials_path: Optional[str] = None  # Path to Firebase service account JSON
     firebase_project_id: Optional[str] = None  # Firebase project ID (alternative to credentials file)
+    firebase_web_api_key: Optional[str] = None  # Firebase Web API Key (for REST API auth)
     use_firebase_auth: bool = True  # Enable Firebase Authentication (default: True)
     
     # Application

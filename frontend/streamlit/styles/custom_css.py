@@ -261,6 +261,9 @@ def get_custom_css(bg_image_base64: str = None, theme_name: str = 'midnight_ocea
        ============================================ */
     @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
     
+    /* Load Material Icons to prevent text showing instead of icons */
+    @import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+    
     /* ============================================
        CSS VARIABLES - {colors['name']} Theme
        ============================================ */
@@ -624,6 +627,151 @@ def get_custom_css(bg_image_base64: str = None, theme_name: str = 'midnight_ocea
         border-color: var(--color-text-secondary) !important;
     }}
     
+    /* Fix Material Icons text appearing in selectboxes */
+    .stSelectbox * {{
+        font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+    }}
+    
+    /* NUCLEAR OPTION: Hide ALL Material Icons text in selectboxes */
+    .stSelectbox [class*="material-icons"],
+    .stSelectbox [class*="keyboard_arrow"],
+    .stSelectbox [class*="keyboard_double_arrow"],
+    .stSelectbox span[class*="material"],
+    .stSelectbox *[class*="material-icons"],
+    [data-testid="stSelectbox"] [class*="material-icons"],
+    [data-testid="stSelectbox"] [class*="keyboard_arrow"],
+    [data-testid="stSelectbox"] [class*="keyboard_double_arrow"] {{
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        font-size: 0 !important;
+        width: 0 !important;
+        height: 0 !important;
+        overflow: hidden !important;
+        position: absolute !important;
+        left: -9999px !important;
+        text-indent: -9999px !important;
+        line-height: 0 !important;
+    }}
+    
+    /* Remove ALL pseudo-elements with Material Icons content */
+    .stSelectbox::before,
+    .stSelectbox::after,
+    .stSelectbox *::before,
+    .stSelectbox *::after,
+    .stSelectbox select::before,
+    .stSelectbox select::after,
+    .stSelectbox > div::before,
+    .stSelectbox > div::after,
+    .stSelectbox > div > div::before,
+    .stSelectbox > div > div::after,
+    [data-testid="stSelectbox"]::before,
+    [data-testid="stSelectbox"]::after,
+    [data-testid="stSelectbox"] *::before,
+    [data-testid="stSelectbox"] *::after {{
+        content: "" !important;
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        font-size: 0 !important;
+        width: 0 !important;
+        height: 0 !important;
+    }}
+    
+    /* Hide any text nodes that contain Material Icons names - target Streamlit's emotion cache classes */
+    .stSelectbox *,
+    [data-testid="stSelectbox"] *,
+    [class*="st-emotion-cache"] * {{
+        text-indent: 0 !important;
+    }}
+    
+    /* Target Streamlit's specific selectbox structure - hide icon containers */
+    .stSelectbox > div > div:last-child,
+    .stSelectbox > div:last-child,
+    [data-testid="stSelectbox"] > div > div:last-child,
+    [data-testid="stSelectbox"] > div:last-child,
+    [data-testid="stSelectbox"] > div > div > div:last-child {{
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        font-size: 0 !important;
+        width: 0 !important;
+        height: 0 !important;
+        overflow: hidden !important;
+        position: absolute !important;
+        left: -9999px !important;
+    }}
+    
+    /* Hide spans that might contain icon text */
+    .stSelectbox > div > div > span,
+    .stSelectbox > div > span,
+    .stSelectbox span[aria-hidden="true"],
+    [data-testid="stSelectbox"] > div > div > span,
+    [data-testid="stSelectbox"] > div > span,
+    [data-testid="stSelectbox"] span[aria-hidden="true"] {{
+        font-size: 0 !important;
+        line-height: 0 !important;
+        color: transparent !important;
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        width: 0 !important;
+        height: 0 !important;
+        overflow: hidden !important;
+    }}
+    
+    /* Style selectbox arrow properly - use custom SVG */
+    .stSelectbox select,
+    [data-testid="stSelectbox"] select {{
+        padding-right: 2rem !important;
+        appearance: none !important;
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23ffffff' d='M6 9L1 4h10z'/%3E%3C/svg%3E") !important;
+        background-repeat: no-repeat !important;
+        background-position: right 0.5rem center !important;
+        background-size: 12px !important;
+    }}
+    
+    /* EXTREME: Hide any element with Streamlit emotion cache classes that might contain icon text */
+    /* Note: CSS :has-text() doesn't exist, so we use JavaScript for this */
+    /* But we can hide common structures */
+    [class*="st-emotion-cache"] > div:last-child,
+    [class*="st-emotion-cache"] > div > div:last-child {{
+        font-size: 0 !important;
+        line-height: 0 !important;
+        overflow: hidden !important;
+    }}
+    
+    /* Target specific Streamlit selectbox emotion cache structure */
+    [class*="st-emotion-cache"][class*="e1"] > div:last-child {{
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        width: 0 !important;
+        height: 0 !important;
+        overflow: hidden !important;
+        font-size: 0 !important;
+        line-height: 0 !important;
+    }}
+    
+    /* Hide background images that might contain text */
+    .stSelectbox,
+    [data-testid="stSelectbox"] {{
+        background-image: none !important;
+    }}
+    
+    .stSelectbox *,
+    [data-testid="stSelectbox"] * {{
+        background-image: none !important;
+    }}
+    
+    /* Exception: Allow the select element's arrow background */
+    .stSelectbox select,
+    [data-testid="stSelectbox"] select {{
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23ffffff' d='M6 9L1 4h10z'/%3E%3C/svg%3E") !important;
+    }}
+    
     /* ============================================
        CHAT INPUT
        ============================================ */
@@ -675,8 +823,81 @@ def get_custom_css(bg_image_base64: str = None, theme_name: str = 'midnight_ocea
     }}
     
     /* ============================================
-       EXPANDER
+       EXPANDER - CRITICAL FIX FOR KEYBOARD_ARROW TEXT
        ============================================ */
+    /* Target native HTML details/summary structure that Streamlit uses */
+    [data-testid="stExpander"] details summary,
+    [data-testid="stExpander"] summary,
+    [data-testid="stExpander"] details > summary {{
+        position: relative !important;
+    }}
+    
+    /* Hide the span inside summary that contains icon text */
+    [data-testid="stExpander"] summary span,
+    [data-testid="stExpander"] details summary span,
+    [data-testid="stExpander"] summary > span,
+    [data-testid="stExpander"] details summary > span {{
+        font-size: 0 !important;
+        line-height: 0 !important;
+        width: 0 !important;
+        height: 0 !important;
+        overflow: hidden !important;
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        position: absolute !important;
+        left: -9999px !important;
+        text-indent: -9999px !important;
+        color: transparent !important;
+        background: transparent !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }}
+    
+    /* Remove ALL pseudo-elements from summary and its children */
+    [data-testid="stExpander"] summary::before,
+    [data-testid="stExpander"] summary::after,
+    [data-testid="stExpander"] details summary::before,
+    [data-testid="stExpander"] details summary::after,
+    [data-testid="stExpander"] summary span::before,
+    [data-testid="stExpander"] summary span::after,
+    [data-testid="stExpander"] details summary span::before,
+    [data-testid="stExpander"] details summary span::after {{
+        content: "" !important;
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        font-size: 0 !important;
+        width: 0 !important;
+        height: 0 !important;
+        background: none !important;
+        background-image: none !important;
+    }}
+    
+    /* Hide background images/text on summary elements */
+    [data-testid="stExpander"] summary,
+    [data-testid="stExpander"] details summary,
+    [data-testid="stExpander"] summary *,
+    [data-testid="stExpander"] details summary * {{
+        background-image: none !important;
+    }}
+    
+    /* Target emotion cache classes specifically in expander summaries */
+    [data-testid="stExpander"] summary [class*="st-emotion-cache"],
+    [data-testid="stExpander"] details summary [class*="st-emotion-cache"] {{
+        font-size: 0 !important;
+        line-height: 0 !important;
+        width: 0 !important;
+        height: 0 !important;
+        overflow: hidden !important;
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        position: absolute !important;
+        left: -9999px !important;
+    }}
+    
     .streamlit-expanderHeader {{
         background: var(--color-bg-light) !important;
         border-radius: var(--border-radius-sm) !important;
@@ -688,6 +909,127 @@ def get_custom_css(bg_image_base64: str = None, theme_name: str = 'midnight_ocea
     .streamlit-expanderHeader:hover {{
         background: var(--color-bg-medium) !important;
         border-color: var(--color-text-secondary) !important;
+    }}
+    
+    /* Fix Material Icons in expanders - Load font and hide text fallback */
+    /* Material Icons font is loaded above, now ensure icons render properly */
+    .streamlit-expanderHeader [class*="material-icons"],
+    [data-testid="stExpander"] [class*="material-icons"],
+    .streamlit-expanderHeader span[class*="material"],
+    [data-testid="stExpander"] span[class*="material"] {{
+        font-family: 'Material Icons' !important;
+        font-weight: normal !important;
+        font-style: normal !important;
+        font-size: 24px !important;
+        line-height: 1 !important;
+        letter-spacing: normal !important;
+        text-transform: none !important;
+        display: inline-block !important;
+        white-space: nowrap !important;
+        word-wrap: normal !important;
+        direction: ltr !important;
+        -webkit-font-feature-settings: 'liga' !important;
+        -webkit-font-smoothing: antialiased !important;
+    }}
+    
+    /* Hide any text content that's not an icon (fallback text) */
+    .streamlit-expanderHeader span:not([class*="material-icons"]):not([aria-hidden="true"]),
+    [data-testid="stExpander"] span:not([class*="material-icons"]):not([aria-hidden="true"]) {{
+        font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+    }}
+    
+    /* Ensure Material Icons render properly in expander headers */
+    .streamlit-expanderHeader span[aria-hidden="true"],
+    [data-testid="stExpander"] span[aria-hidden="true"] {{
+        font-family: 'Material Icons' !important;
+        font-size: 20px !important;
+        color: var(--color-text-secondary) !important;
+    }}
+    
+    /* Hide the icon container's text content if Material Icons font fails */
+    .streamlit-expanderHeader > div > div:last-child,
+    [data-testid="stExpander"] > div > div:last-child {{
+        position: relative !important;
+        overflow: hidden !important;
+    }}
+    
+    /* Target the icon container specifically - ensure Material Icons font */
+    .streamlit-expanderHeader > div > div:last-child > span,
+    [data-testid="stExpander"] > div > div:last-child > span {{
+        font-family: 'Material Icons' !important;
+        font-size: 20px !important;
+        color: var(--color-text-secondary) !important;
+        display: inline-block !important;
+    }}
+    
+    /* Nuclear option: Hide any visible text that matches icon names */
+    .streamlit-expanderHeader > div > div:last-child > span:not([class*="material-icons"]) {{
+        font-size: 0 !important;
+        width: 0 !important;
+        height: 0 !important;
+        overflow: hidden !important;
+        display: none !important;
+    }}
+    
+    /* EXTREME: Hide the entire last div in expander header (where icon usually is) */
+    .streamlit-expanderHeader > div > div:last-child {{
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        width: 0 !important;
+        height: 0 !important;
+        overflow: hidden !important;
+        font-size: 0 !important;
+        line-height: 0 !important;
+    }}
+    
+    /* Also hide in Streamlit's structure */
+    [data-testid="stExpander"] > div > div:last-child {{
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        width: 0 !important;
+        height: 0 !important;
+        overflow: hidden !important;
+        font-size: 0 !important;
+        line-height: 0 !important;
+    }}
+    
+    /* NUCLEAR OPTION: Hide ANY element containing keyboard_arrow text using CSS content matching */
+    /* This uses a CSS trick - we can't match text content directly, but we can hide common structures */
+    .streamlit-expanderHeader > div:last-child,
+    .streamlit-expanderHeader > div > div:last-child,
+    .streamlit-expanderHeader > div > div > div:last-child,
+    [data-testid="stExpander"] > div:last-child,
+    [data-testid="stExpander"] > div > div:last-child,
+    [data-testid="stExpander"] > div > div > div:last-child {{
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        width: 0 !important;
+        height: 0 !important;
+        overflow: hidden !important;
+        font-size: 0 !important;
+        line-height: 0 !important;
+        position: absolute !important;
+        left: -9999px !important;
+    }}
+    
+    /* Hide ALL spans in expander headers that might contain the text */
+    .streamlit-expanderHeader span,
+    [data-testid="stExpander"] span {{
+        font-family: 'Material Icons', 'Outfit', sans-serif !important;
+    }}
+    
+    /* Hide spans that are likely icon containers */
+    .streamlit-expanderHeader > div > div > span,
+    .streamlit-expanderHeader > div > span,
+    [data-testid="stExpander"] > div > div > span,
+    [data-testid="stExpander"] > div > span {{
+        font-size: 0 !important;
+        width: 0 !important;
+        height: 0 !important;
+        overflow: hidden !important;
     }}
     
     [data-testid="stExpanderDetails"] {{
@@ -945,6 +1287,47 @@ def get_custom_css(bg_image_base64: str = None, theme_name: str = 'midnight_ocea
         overflow: hidden !important;
     }}
     
+    /* NUCLEAR OPTION: Hide ANY element that contains keyboard arrow icon text */
+    /* This targets elements by their text content using CSS attribute selectors where possible */
+    *:not(script):not(style) {{
+        /* Use CSS to hide elements containing Material Icons text */
+        text-rendering: optimizeLegibility !important;
+    }}
+    
+    /* Hide spans and divs that are likely icon containers */
+    span[aria-hidden="true"],
+    div[aria-hidden="true"],
+    span.material-icons,
+    div.material-icons {{
+        font-family: 'Material Icons' !important;
+    }}
+    
+    /* Universal rule: Hide any visible text matching icon names */
+    /* Note: CSS can't directly match text content, but we can hide common structures */
+    .stSelectbox > div > div:last-child,
+    .stSelectbox > div:last-child,
+    [data-testid="stSelectbox"] > div > div:last-child,
+    [data-testid="stSelectbox"] > div:last-child {{
+        font-size: 0 !important;
+        line-height: 0 !important;
+        overflow: hidden !important;
+    }}
+    
+    /* Hide ALL potential icon containers in top bars, headers, etc. */
+    header *,
+    [role="banner"] *,
+    .stApp > header *,
+    [data-testid="stHeader"] * {{
+        font-family: 'Outfit', sans-serif !important;
+    }}
+    
+    /* Specifically target any element that might show icon text in headers */
+    header span:not([class*="material-icons"]),
+    [role="banner"] span:not([class*="material-icons"]),
+    .stApp > header span:not([class*="material-icons"]) {{
+        font-size: inherit !important;
+    }}
+    
     /* Prevent text overflow globally */
     * {{
         overflow-wrap: break-word !important;
@@ -1005,6 +1388,67 @@ def get_custom_css(bg_image_base64: str = None, theme_name: str = 'midnight_ocea
         box-shadow: 0 0 15px var(--neon-glow);
     }}
     </style>
+    
+    <script>
+    // Hide Material Icons text that appears as "keyboard_arrow_right" or "keyboard_arrow_down"
+    (function() {{
+        function hideMaterialIconsText() {{
+            // Find all elements that might contain the text
+            const expanders = document.querySelectorAll('[data-testid="stExpander"]');
+            expanders.forEach(expander => {{
+                const walker = document.createTreeWalker(
+                    expander,
+                    NodeFilter.SHOW_TEXT,
+                    null,
+                    false
+                );
+                
+                let node;
+                while (node = walker.nextNode()) {{
+                    if (node.textContent && (
+                        node.textContent.includes('keyboard_arrow_right') ||
+                        node.textContent.includes('keyboard_arrow_down') ||
+                        node.textContent.includes('keyboard_arrow_up') ||
+                        node.textContent.includes('keyboard_arrow_left') ||
+                        node.textContent.includes('keyboard_double_arrow_right') ||
+                        node.textContent.includes('keyboard_double_arrow_down') ||
+                        node.textContent.includes('keyboard_double_arrow_up') ||
+                        node.textContent.includes('keyboard_double_arrow_left') ||
+                        node.textContent.includes('keyboard_arrow') ||
+                        node.textContent.includes('keyboard_double_arrow')
+                    )) {{
+                        // Hide the text node's parent element
+                        if (node.parentElement) {{
+                            node.parentElement.style.display = 'none';
+                            node.parentElement.style.visibility = 'hidden';
+                            node.parentElement.style.opacity = '0';
+                            node.parentElement.style.fontSize = '0';
+                            node.parentElement.style.width = '0';
+                            node.parentElement.style.height = '0';
+                            node.parentElement.style.overflow = 'hidden';
+                        }}
+                    }}
+                }}
+            }});
+        }}
+        
+        // Run immediately
+        hideMaterialIconsText();
+        
+        // Run after DOM updates
+        setTimeout(hideMaterialIconsText, 100);
+        setTimeout(hideMaterialIconsText, 500);
+        setTimeout(hideMaterialIconsText, 1000);
+        
+        // Watch for new elements
+        const observer = new MutationObserver(hideMaterialIconsText);
+        observer.observe(document.body, {{
+            childList: true,
+            subtree: true
+        }});
+    }})();
+    </script>
+    
     """
     
     return css
