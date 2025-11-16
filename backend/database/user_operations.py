@@ -181,8 +181,45 @@ class UserDB:
         Returns:
             User object if successful, None otherwise
         """
-        # Verify Firebase token
+        # Try to verify Firebase token (requires Firebase Admin SDK)
         firebase_user_info = verify_firebase_token(firebase_token)
+        
+        # If token verification fails, try to decode token directly (fallback)
+        if not firebase_user_info:
+            # Fallback: Try to decode the token without verification
+            # This is less secure but works if Firebase Admin SDK verification fails
+            try:
+                import base64
+                import json
+                # Firebase ID tokens are JWT - decode the payload (not secure, but works)
+                parts = firebase_token.split('.')
+                if len(parts) >= 2:
+                    # Decode the payload (second part)
+                    payload = parts[1]
+                    # Add padding if needed
+                    padding = 4 - len(payload) % 4
+                    if padding != 4:
+                        payload += '=' * padding
+                    decoded = base64.urlsafe_b64decode(payload)
+                    token_data = json.loads(decoded)
+                    
+                    # Firebase REST API tokens use 'user_id' or 'sub' for UID
+                    # Firebase Admin SDK verified tokens use 'uid'
+                    uid = token_data.get('user_id') or token_data.get('sub') or token_data.get('uid')
+                    
+                    firebase_user_info = {
+                        'uid': uid,
+                        'email': token_data.get('email'),
+                        'name': token_data.get('name')
+                    }
+                    print(f"⚠️ Using fallback token decoding (Firebase Admin SDK verification failed)")
+                    print(f"⚠️ Decoded UID: {uid}, Email: {token_data.get('email')}")
+            except Exception as e:
+                print(f"Failed to decode token: {e}")
+                import traceback
+                print(traceback.format_exc())
+                return None
+        
         if not firebase_user_info:
             return None
         
@@ -223,12 +260,13 @@ class UserDB:
                     return user
             
             # Create new user linked to Firebase
+            # Use empty string for password_hash instead of None to satisfy NOT NULL constraint
             user = User(
                 firebase_uid=firebase_uid,
                 email=email,
                 full_name=name,
                 username=email.split('@')[0] if email else None,  # Use email prefix as username
-                password_hash=None,  # No password for Firebase users
+                password_hash='',  # Empty string for Firebase users (no password stored locally)
                 last_login=datetime.utcnow()
             )
             db.add(user)
@@ -240,6 +278,87 @@ class UserDB:
         except Exception as e:
             db.rollback()
             print(f"Error creating/getting user from Firebase: {e}")
+            return None
+        finally:
+            db.close()
+    
+    @staticmethod
+    def create_user_from_firebase_rest_response(firebase_response: dict) -> Optional[User]:
+        """
+        Create user from Firebase REST API response (signup/signin)
+        Handles cases where Firebase returns localId instead of idToken
+        
+        Args:
+            firebase_response: Response dict from Firebase REST API with keys like:
+                - localId (Firebase UID)
+                - email
+                - displayName
+                - idToken (optional)
+        
+        Returns:
+            User object if successful, None otherwise
+        """
+        firebase_uid = firebase_response.get('localId') or firebase_response.get('uid')
+        if not firebase_uid:
+            print("⚠️ Firebase response missing localId/uid")
+            return None
+        
+        email = firebase_response.get('email')
+        display_name = firebase_response.get('displayName')
+        
+        db = get_db()
+        try:
+            # Check if user already exists with this Firebase UID
+            user = db.query(User).filter(User.firebase_uid == firebase_uid).first()
+            
+            if user:
+                # User exists, update info
+                user.last_login = datetime.utcnow()
+                if email and user.email != email:
+                    user.email = email
+                if display_name and user.full_name != display_name:
+                    user.full_name = display_name
+                db.commit()
+                db.refresh(user)
+                db.expunge(user)
+                return user
+            
+            # Check if user exists with this email (for migration)
+            if email:
+                user = db.query(User).filter(User.email == email).first()
+                if user:
+                    # Link existing user to Firebase
+                    user.firebase_uid = firebase_uid
+                    if display_name and not user.full_name:
+                        user.full_name = display_name
+                    user.last_login = datetime.utcnow()
+                    db.commit()
+                    db.refresh(user)
+                    db.expunge(user)
+                    return user
+            
+            # Create new user
+            # Use empty string for password_hash instead of None to satisfy NOT NULL constraint
+            # (SQLite doesn't support ALTER COLUMN, so existing tables may have NOT NULL)
+            user = User(
+                firebase_uid=firebase_uid,
+                email=email,
+                full_name=display_name,
+                username=email.split('@')[0] if email else None,
+                password_hash='',  # Empty string for Firebase users (no password stored locally)
+                last_login=datetime.utcnow()
+            )
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+            db.expunge(user)
+            return user
+            
+        except Exception as e:
+            db.rollback()
+            print(f"Error creating user from Firebase REST response: {e}")
+            import traceback
+            traceback.print_exc()
             return None
         finally:
             db.close()

@@ -91,9 +91,20 @@ def render_login_page():
                             try:
                                 # Sign in with Firebase REST API
                                 firebase_result = signin_with_email_password(email, password)
-                                if firebase_result and 'idToken' in firebase_result:
-                                    # Get or create user in database using Firebase token
-                                    user = UserDB.authenticate_with_firebase(firebase_result['idToken'])
+                                
+                                # Check if signin was successful (has localId or idToken)
+                                if firebase_result and ('localId' in firebase_result or 'idToken' in firebase_result):
+                                    # Get or create user in database
+                                    user = None
+                                    
+                                    # Try using idToken if available
+                                    if 'idToken' in firebase_result:
+                                        user = UserDB.authenticate_with_firebase(firebase_result['idToken'])
+                                    
+                                    # If no user yet, create from REST response directly (handles localId case)
+                                    if not user:
+                                        user = UserDB.create_user_from_firebase_rest_response(firebase_result)
+                                    
                                     if user:
                                         _set_user_session_state(user)
                                         
@@ -120,56 +131,9 @@ def render_login_page():
                                 else:
                                     st.error(f"❌ Authentication error: {error_msg}")
             
-            # Legacy Username/Password Login (fallback)
+            # Show error if Firebase is not configured
             if not use_firebase_rest:
-                st.info("⚠️ Firebase Web API Key not configured. Using legacy authentication.")
-            
-            with st.expander("🔐 Legacy Login (Username/Password)", expanded=not use_firebase_rest):
-                with st.form("login_form", clear_on_submit=False):
-                    username = st.text_input(
-                        "Username",
-                        placeholder="Enter your username",
-                        key="login_username"
-                    )
-                    
-                    password = st.text_input(
-                        "Password",
-                        type="password",
-                        placeholder="Enter your password",
-                        key="login_password"
-                    )
-                    
-                    remember_me = st.checkbox(
-                        "Remember me for 30 days",
-                        value=True,
-                        key="remember_me"
-                    )
-                    
-                    st.markdown("<br>", unsafe_allow_html=True)
-                    
-                    submitted = st.form_submit_button(
-                        "🔐 Sign In",
-                        use_container_width=True,
-                        type="primary"
-                    )
-                    
-                    if submitted:
-                        if not username or not password:
-                            st.error("Please enter both username and password")
-                        else:
-                            user = UserDB.authenticate_user(username, password)
-                            if user:
-                                _set_user_session_state(user)
-                                if remember_me:
-                                    try:
-                                        plain_token, _ = UserSessionDB.create_session(user.id)
-                                        cookie_manager.set('session_token', plain_token, max_age=30*24*60*60)
-                                    except Exception as e:
-                                        print(f"Failed to create session: {e}")
-                                st.success(f"✅ Welcome back, {user.full_name or user.username}!")
-                                st.rerun()
-                            else:
-                                st.error("❌ Invalid username or password")
+                st.error("❌ Firebase Web API Key is not configured. Please set FIREBASE_WEB_API_KEY in your environment.")
         
         # ===== SIGNUP TAB =====
         with tab2:
@@ -236,16 +200,34 @@ def render_login_page():
                                     display_name=new_full_name if new_full_name else None
                                 )
                                 
-                                if firebase_result and 'idToken' in firebase_result:
-                                    # Create user in database using Firebase token
-                                    user = UserDB.authenticate_with_firebase(firebase_result['idToken'])
-                                    if user:
-                                        st.success(f"✅ Account created! Welcome, {user.full_name or user.email}!")
-                                        st.info("👉 Please switch to the **Sign In** tab to login")
-                                    else:
-                                        st.error("❌ Account created in Firebase but failed to create database record. Please try signing in.")
+                                # Check if signup was successful (has localId or idToken)
+                                if firebase_result and ('localId' in firebase_result or 'idToken' in firebase_result):
+                                    # Create user in database
+                                    try:
+                                        user = None
+                                        
+                                        # Try using idToken if available
+                                        if 'idToken' in firebase_result:
+                                            user = UserDB.authenticate_with_firebase(firebase_result['idToken'])
+                                        
+                                        # If no user yet, create from REST response directly (handles localId case)
+                                        if not user:
+                                            user = UserDB.create_user_from_firebase_rest_response(firebase_result)
+                                        
+                                        if user:
+                                            st.success(f"✅ Account created! Welcome, {user.full_name or user.email}!")
+                                            st.info("👉 Please switch to the **Sign In** tab to login")
+                                        else:
+                                            st.error("❌ Account created in Firebase but failed to create database record.")
+                                            st.info("💡 Check terminal logs for details. You can try signing in - the account will be created automatically.")
+                                    except Exception as db_error:
+                                        st.error(f"❌ Database error: {str(db_error)}")
+                                        import traceback
+                                        st.code(traceback.format_exc())
                                 else:
-                                    st.error("❌ Failed to create account. Please try again.")
+                                    st.error("❌ Failed to create account in Firebase. Please try again.")
+                                    if firebase_result:
+                                        st.error(f"Debug: Firebase response keys: {list(firebase_result.keys())}")
                             except Exception as e:
                                 error_msg = str(e)
                                 if "EMAIL_EXISTS" in error_msg:
@@ -256,82 +238,12 @@ def render_login_page():
                                     st.error("❌ Invalid email address. Please check your email.")
                                 else:
                                     st.error(f"❌ Error creating account: {error_msg}")
+                                    import traceback
+                                    st.code(traceback.format_exc())
             
-            # Legacy Signup (fallback)
+            # Show error if Firebase is not configured
             if not use_firebase_rest:
-                st.info("⚠️ Firebase Web API Key not configured. Using legacy signup.")
-            
-            with st.expander("🔐 Legacy Signup (Username/Password)", expanded=not use_firebase_rest):
-                with st.form("signup_form", clear_on_submit=True):
-                    new_username = st.text_input(
-                        "Username *",
-                        placeholder="Choose a username",
-                        key="signup_username"
-                    )
-                    
-                    new_email = st.text_input(
-                        "Email *",
-                        placeholder="your@email.com",
-                        key="signup_email"
-                    )
-                    
-                    new_full_name = st.text_input(
-                        "Full Name",
-                        placeholder="Your full name (optional)",
-                        key="signup_full_name"
-                    )
-                    
-                    col_a, col_b = st.columns(2)
-                    
-                    with col_a:
-                        new_password = st.text_input(
-                            "Password *",
-                            type="password",
-                            placeholder="Create a strong password",
-                            key="signup_password",
-                            help="Minimum 6 characters"
-                        )
-                    
-                    with col_b:
-                        confirm_password = st.text_input(
-                            "Confirm Password *",
-                            type="password",
-                            placeholder="Re-enter password",
-                            key="signup_confirm_password"
-                        )
-                    
-                    st.markdown("<br>", unsafe_allow_html=True)
-                    
-                    signup_submitted = st.form_submit_button(
-                        "✨ Create Account",
-                        use_container_width=True,
-                        type="primary"
-                    )
-                    
-                    if signup_submitted:
-                        if not new_username or not new_email or not new_password:
-                            st.error("❌ Please fill in all required fields")
-                        elif len(new_password) < 6:
-                            st.error("❌ Password must be at least 6 characters long")
-                        elif new_password != confirm_password:
-                            st.error("❌ Passwords do not match")
-                        elif '@' not in new_email:
-                            st.error("❌ Please enter a valid email address")
-                        else:
-                            try:
-                                new_user = UserDB.create_user(
-                                    username=new_username,
-                                    email=new_email,
-                                    password=new_password,
-                                    full_name=new_full_name if new_full_name else None
-                                )
-                                if new_user:
-                                    st.success(f"✅ Account created! Welcome, {new_user.full_name or new_user.username}!")
-                                    st.info("👉 Please switch to the **Sign In** tab to login")
-                                else:
-                                    st.error("❌ Username or email already exists. Please choose different credentials.")
-                            except Exception as e:
-                                st.error(f"❌ Error creating account: {str(e)}")
+                st.error("❌ Firebase Web API Key is not configured. Please set FIREBASE_WEB_API_KEY in your environment.")
         
         # Team info
         st.markdown("<br><br>", unsafe_allow_html=True)

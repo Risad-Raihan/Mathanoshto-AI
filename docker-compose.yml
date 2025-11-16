@@ -23,7 +23,7 @@ services:
       - PYTHONDONTWRITEBYTECODE=1
       
       # Firebase Configuration
-      - FIREBASE_WEB_API_KEY=AIzaSyCLDti_JM_459MxQ2F0Rjioulics-Mh8Dw
+      - FIREBASE_WEB_API_KEY=${FIREBASE_WEB_API_KEY}
       
       # NOTE: API keys are managed per-user via the web UI
       # Users will add their own keys after first login
